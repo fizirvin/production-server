@@ -20,7 +20,6 @@ import Production from '../models/production'
 import Resine from '../models/resine'
 import Downtime from '../models/downtime'
 import Ng from '../models/ng'
-import machine from '../models/machine'
 
 const graphqlResolver = {
   items: async function () {
@@ -796,6 +795,94 @@ const graphqlResolver = {
 
     return {
       ...item._doc,
+      createdAt: fullDate(createdAt),
+      user: existingUser.name
+    }
+  },
+  newReport: async function ({ input }) {
+    const newItem = new Report({
+      date: input.date,
+      shift: input.shift,
+      machine: input.machine,
+      real: input.real,
+      ng: input.ng,
+      ok: input.ok,
+      plan: input.plan,
+      tprod: input.tprod,
+      cycles: input.cycles,
+      ptime: input.ptime,
+      wtime: input.wtime,
+      dtime: input.dtime,
+      avail: input.avail,
+      perf: input.perf,
+      qual: input.qual,
+      oee: input.oee,
+      purge: input.purge,
+      comments: input.comments,
+      team: input.team,
+      oper: input.oper,
+      insp: input.insp,
+      user: input.user,
+      dates: allDate(input.date)
+    })
+    const report = await newItem.save()
+    const { _id, createdAt, user } = report._doc
+
+    const production = input.production.map(async (item) => {
+      const newProduction = new Production({
+        report: _id,
+        ...item
+      })
+
+      const productionSaved = await newProduction.save()
+      return { ...productionSaved._doc }
+    })
+
+    const downtimes = input.downtimes.map(async (item) => {
+      const newDowntime = new Downtime({
+        report: _id,
+        ...item
+      })
+
+      const downtimeSaved = await newDowntime.save()
+      return { ...downtimeSaved._doc }
+    })
+
+    const ngs = input.ngs.map(async (item) => {
+      const newNg = new Ng({
+        report: _id,
+        ...item
+      })
+
+      const ngSaved = await newNg.save()
+      return { ...ngSaved._doc }
+    })
+
+    const resines = input.resines.map(async (item) => {
+      const newResine = new Resine({
+        report: _id,
+        ...item
+      })
+
+      const resineSaved = await newResine.save()
+      return { ...resineSaved._doc }
+    })
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      production,
+      downtimes,
+      ngs,
+      resines,
       createdAt: fullDate(createdAt),
       user: existingUser.name
     }

@@ -227,10 +227,54 @@ module.exports = buildSchema(`
         team: String
         oper: String
         insp: String
+        production: [Production]
+        downtimes: [Downtime]
+        ngs: [Ng]
+        resines: [Resine]
+        progrs: Int
         user: String!
         dates: Dates!
         createdAt: Date!
         updatedAt: Date
+    }
+
+    type Production{
+        _id: ID
+        program: ID
+        molde: ID
+        model: ID
+        real: Int
+        ng: Int
+        ok: Int
+        plan: Int
+        prod: Int
+        cycles: Int
+        wtime: Decimal
+        dtime: Decimal
+        avail: Decimal
+        perf: Decimal
+        qual: Decimal
+        oee: Decimal
+    }
+
+    type Downtime{
+        _id: ID
+        issue: ID
+        mins: Int
+    }
+
+    type Ng{
+        _id: ID
+        defect: ID
+        model: ID
+        molde: ID
+        pieces: Int
+    }
+
+    type Resine{
+        _id: ID
+        resine: ID
+        purge: Int
     }
 
     type Dates{
@@ -259,6 +303,7 @@ module.exports = buildSchema(`
         newShot(input: NewShot): Shot!
         newProfile(input: NewProfile): Profile!
         newUser(input: NewUser): User!
+        newReport(input: NewReport): Report!
 
         updateMolde(input: UpdateMolde): Molde!
         updateMachine(input: UpdateMachine): Machine!
@@ -366,6 +411,70 @@ module.exports = buildSchema(`
         password: String!
         level: String!
         user: ID!
+    }
+
+    input NewReport {
+        date: String!
+        shift: String!
+        machine: String!
+        real: Int!
+        ng: Int!
+        ok: Int!
+        plan: Int!
+        tprod: Int!
+        cycles: Int!
+        ptime: Int!
+        wtime: Decimal!
+        dtime: Decimal!
+        avail: Decimal!
+        perf: Decimal!
+        qual: Decimal!
+        oee: Decimal!
+        purge: Int
+        comments: String
+        team: String
+        oper: String
+        insp: String
+        production: [ProductionInput]
+        downtimes: [DowntimeInput]
+        ngs: [NgInput]
+        resines: [ResineInput]
+        progs: Int!
+    }
+
+    input ProductionInput{
+        program: ID
+        molde: ID
+        model: ID
+        real: Int
+        ng: Int
+        ok: Int
+        plan: Int
+        prod: Int
+        cycles: Int
+        wtime: Decimal
+        dtime: Decimal
+        avail: Decimal
+        perf: Decimal
+        qual: Decimal
+        oee: Decimal
+    }
+
+    input DowntimeInput{
+        issue: ID
+        mins: Int
+    }
+
+    input NgInput{
+        defect: ID
+        model: ID
+        molde: ID
+        pieces: Int
+    }
+
+    input ResineInput{
+        resine: ID
+        purge: Int
     }
 
     input UpdateMolde {
