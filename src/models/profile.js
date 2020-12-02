@@ -42,14 +42,6 @@ const profileSchema = new Schema(
       type: Boolean,
       required: true
     },
-    createdAt: {
-      type: Date,
-      required: true
-    },
-    updatedAt: {
-      type: Date,
-      required: false
-    },
     user: {
       type: Schema.Types.ObjectId,
       required: true,
@@ -61,7 +53,8 @@ const profileSchema = new Schema(
     }
   },
   {
-    versionKey: false
+    versionKey: false,
+    timestamps: true
   }
 )
 

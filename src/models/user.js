@@ -18,22 +18,15 @@ const userSchema = new Schema(
       type: Boolean,
       required: true
     },
-    createdAt: {
-      type: Date,
-      required: true
-    },
     user: {
       type: Schema.Types.ObjectId,
       required: true,
       ref: 'User'
-    },
-    updatedAt: {
-      type: Date,
-      required: false
     }
   },
   {
-    versionKey: false
+    versionKey: false,
+    timestamps: true
   }
 )
 

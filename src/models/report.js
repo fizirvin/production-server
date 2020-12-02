@@ -90,6 +90,10 @@ const reportSchema = new Schema(
       type: Schema.Types.ObjectId,
       required: true
     },
+    progrs: {
+      type: Number,
+      required: false
+    },
     dates: {
       y: {
         type: String,
@@ -119,18 +123,17 @@ const reportSchema = new Schema(
         type: String,
         required: true
       }
+    },
+    createdAt: {
+      type: Date,
+      required: false
+    },
+    updatedAt: {
+      type: Date,
+      required: false
     }
-    // createdAt: {
-    //   type: Date,
-    //   required: true
-    // },
-    // updatedAt: {
-    //   type: Date,
-    //   required: false
-    // }
   },
   {
-    timestamps: true,
     versionKey: false
   }
 )

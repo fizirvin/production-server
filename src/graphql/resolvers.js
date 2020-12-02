@@ -21,74 +21,13 @@ import Resine from '../models/resine'
 import Downtime from '../models/downtime'
 import Ng from '../models/ng'
 
+const safeResines = false
+const safeDowntimes = false
+const safeNgs = false
+const safeProductions = false
+const safeReports = false
+
 const graphqlResolver = {
-  items: async function () {
-    // const profiles = await Profile.find()
-
-    // profiles.map(async ({ _id, entry }) => {
-    //   console.log(entry)
-    //   // return await Profile.findByIdAndUpdate(
-    //   //   _id,
-    //   //   { entr: stringDate(date) },
-    //   //   { new: true }
-    //   // )
-    // })
-    // const moldes = await Molde.find()
-    // const cycles = await Production.find({
-    //   cycles: 0
-    // })
-
-    // console.log(cycles)
-    // cycles.map(async (cycle) => {
-    //   // console.log(cycle.program, cycle.report)
-    //   const molde = cycle.molde.toString()
-    //   const cavities = moldes.find((m) => m._id.toString() === molde).cavities
-    //   const cyc = parseInt(cycle.real / cavities)
-
-    //   console.log(cycle._id)
-    //   return await Production.findByIdAndUpdate(
-    //     cycle._id,
-    //     { cycles: cyc },
-    //     { new: true }
-    //   )
-    // })
-
-    // const production = await Production.find().then((prod) => {
-    //   return prod.reduce((a, b) => a + b.real, 0)
-    // })
-
-    // const old = await Old.find().then((prod) => {
-    //   return prod.reduce((a, b) => a + b.TReal, 0)
-    // })
-
-    // console.log(production, old)
-    // await Profile.updateMany(
-    //   {},
-    //   {
-    //     $rename: {
-    //       entr: 'entry'
-    //     }
-    //   }
-    // )
-    // await Shot.updateMany(
-    //   {},
-    //   {
-    //     user: '5edde9dfd3888a26048cdd20',
-    //     createdAt: '2020-05-27T14:00:00.000+00:00'
-    //   }
-    // )
-    // await Profile.updateMany(
-    //   {},
-    //   {
-    //     entr: '5edde9dfd3888a26048cdd20'
-    //   }
-    // )
-    console.log('ya')
-    return { hola: 'hola' }
-  },
-  old: async function () {
-    return { hola: 'hola' }
-  },
   updateMachines: async function () {
     await Machine.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
@@ -96,6 +35,270 @@ const graphqlResolver = {
   updateMoldes: async function () {
     await Molde.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
+  },
+  updateModels: async function () {
+    await Model.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
+  updatePrograms: async function () {
+    await Program.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
+  updateMaterials: async function () {
+    await Material.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
+  updateIssues: async function () {
+    await Issue.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
+  updateDefects: async function () {
+    await Defect.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
+  updateShots: async function () {
+    await Shot.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
+  updateUsers: async function () {
+    await User.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
+  updateProfiles: async function () {
+    await Profile.updateMany({}, { $unset: { __v: '' } })
+
+    //   {
+    //     $rename: {
+    //       entr: 'entry'
+    //     }
+    //   }
+    return { hola: 'hola' }
+  },
+  extractResines: async function () {
+    let totalExtracted = 0
+    const total = await Old.find()
+    total.map(({ _id, resines }) => {
+      if (resines.length > 0 && safeResines) {
+        resines.map((resine) => {
+          const input = {
+            report: _id,
+            resine: resine._id,
+            purge: resine.purge
+          }
+
+          const newResine = new Resine(input)
+          newResine.save()
+          totalExtracted++
+        })
+      }
+    })
+
+    return { total: totalExtracted }
+  },
+  extractDowntimes: async function () {
+    let totalExtracted = 0
+    const total = await Old.find()
+    total.map(({ _id, downtimeDetail }) => {
+      if (downtimeDetail.length > 0 && safeDowntimes) {
+        downtimeDetail.map((dt) => {
+          const input = {
+            report: _id,
+            issue: dt.issueId,
+            mins: dt.mins
+          }
+
+          const newDowntime = new Downtime(input)
+          newDowntime.save()
+          totalExtracted++
+        })
+      }
+    })
+
+    return { total: totalExtracted }
+  },
+  extractNgs: async function () {
+    let totalExtracted = 0
+    const total = await Old.find()
+    total.map(({ _id, defects }) => {
+      if (defects.length > 0 && safeNgs) {
+        defects.map((defect) => {
+          const input = {
+            report: _id,
+            defect: defect._id,
+            model: defect.partNumber,
+            molde: defect.molde,
+            pieces: defect.defectPcs
+          }
+
+          const newNg = new Ng(input)
+          newNg.save()
+          totalExtracted++
+        })
+      }
+    })
+
+    return { total: totalExtracted }
+  },
+  extractProductions: async function () {
+    let totalExtracted = 0
+    let cerocycles = 0
+    let dosprod = 0
+
+    const total = await Old.find()
+
+    const programs = await Program.find()
+    const moldes = await Molde.find()
+
+    total.map(({ _id, production }) => {
+      if (production.length > 1) {
+        dosprod++
+      }
+
+      if (production.length > 0 && safeProductions) {
+        production.map((prods) => {
+          const cycles = prods.cycles || 0
+          const program = prods.program.toString()
+          const productivity = programs.find(
+            (p) => p._id.toString() === program
+          )
+          const item = Math.round(productivity.capacity * prods.wtime)
+          const newprod = prods.prod || item
+
+          if (cycles === 0) {
+            cerocycles++
+          }
+
+          if (!cycles) {
+            const molding = prods.molde.toString()
+            const cavities = moldes.find((m) => m._id.toString() === molding)
+              .cavities
+            const realcycles = prods.real / cavities
+            const production_input = {
+              report: _id,
+              program: program,
+              molde: prods.molde,
+              model: prods.partNumber,
+              real: prods.real,
+              ng: prods.ng,
+              ok: prods.ok,
+              plan: prods.plan,
+              prod: newprod,
+              cycles: realcycles,
+              wtime: prods.wtime,
+              dtime: prods.dtime,
+              avail: prods.availability,
+              perf: prods.performance,
+              qual: prods.quality,
+              oee: prods.oee
+            }
+            const newProduction = new Production(production_input)
+            newProduction.save()
+            totalExtracted++
+          } else {
+            const production_input = {
+              report: _id,
+              program: program,
+              molde: prods.molde,
+              model: prods.partNumber,
+              real: prods.real,
+              ng: prods.ng,
+              ok: prods.ok,
+              plan: prods.plan,
+              prod: newprod,
+              cycles: prods.cycles,
+              wtime: prods.wtime,
+              dtime: prods.dtime,
+              avail: prods.availability,
+              perf: prods.performance,
+              qual: prods.quality,
+              oee: prods.oee
+            }
+            const newProduction = new Production(production_input)
+            newProduction.save()
+            totalExtracted++
+          }
+        })
+      }
+    })
+    console.log(cerocycles, dosprod)
+
+    return { total: totalExtracted }
+  },
+  extractReports: async function () {
+    let totalExtracted = 0
+    const total = await Old.find()
+
+    if (total.length > 0 && safeReports) {
+      total.map(
+        ({
+          _id,
+          reportDate,
+          shift,
+          machine,
+          userId,
+          TReal,
+          TNG,
+          TOK,
+          TPlan,
+          TProd,
+          TWTime,
+          TDTime,
+          TAvailability,
+          TPerformance,
+          TQuality,
+          TOEE,
+          comments,
+          workers,
+          production,
+          createdAt,
+          updatedAt
+        }) => {
+          const comentarios = comments || 'no comments'
+          const equipo = workers.team || 'no team'
+          const operador = workers.operator || '5f17a67aa8d63200088369f2'
+          const inspector = workers.inspector || '5f17a67aa8d63200088369f2'
+          const T_PROD = TProd || 0
+
+          const updated = updatedAt || createdAt
+
+          const input = {
+            _id,
+            date: stringDate(reportDate),
+            shift,
+            machine,
+            real: TReal,
+            ng: TNG,
+            ok: TOK,
+            plan: TPlan,
+            tprod: T_PROD,
+            cycles: 0,
+            ptime: parseInt(parseFloat(TWTime) + parseFloat(TDTime)),
+            wtime: TWTime,
+            dtime: TDTime,
+            avail: TAvailability,
+            perf: TPerformance,
+            qual: TQuality,
+            oee: TOEE,
+            purge: 0,
+            comments: comentarios,
+            team: equipo,
+            oper: operador,
+            insp: inspector,
+            user: userId,
+            progrs: production.length,
+            dates: allDate(reportDate),
+            createdAt: createdAt,
+            updatedAt: updated
+          }
+
+          const newReport = new Report(input)
+          newReport.save()
+          totalExtracted++
+        }
+      )
+    }
+
+    return { total: totalExtracted }
   },
   moldes: async function ({ page, add }) {
     if (!page) {

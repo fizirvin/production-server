@@ -17,14 +17,30 @@ module.exports = buildSchema(`
         profiles(page: Int, add: Int): ProfilesData!
         users(page: Int, add: Int): UsersData!
         reports(page: Int, add: Int): ReportsData!
-        old: Old
-        items: Old
-        updateMachines: Old
-        updateMoldes: Old
+
+        updateMachines: Hola
+        updateMoldes: Hola
+        updateModels: Hola
+        updatePrograms: Hola
+        updateMaterials: Hola
+        updateIssues: Hola
+        updateDefects: Hola
+        updateShots: Hola
+        updateProfiles: Hola
+        updateUsers: Hola
+        extractResines: Extracted
+        extractDowntimes: Extracted
+        extractNgs: Extracted
+        extractProductions: Extracted
+        extractReports: Extracted
     }
 
-    type Old{
+    type Hola{
         hola: String
+    }
+
+    type Extracted{
+        total: Int
     }
 
     type Molde {
