@@ -19,6 +19,7 @@ module.exports = buildSchema(`
         reports(page: Int, add: Int): ReportsData!
         old: Old
         items: Old
+        updateMachines: Old
     }
 
     type Old{

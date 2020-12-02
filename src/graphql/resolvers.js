@@ -89,6 +89,10 @@ const graphqlResolver = {
   old: async function () {
     return { hola: 'hola' }
   },
+  updateMachines: async function () {
+    await Machine.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
   moldes: async function ({ page, add }) {
     if (!page) {
       page = 1
@@ -547,10 +551,7 @@ const graphqlResolver = {
   },
   newMachine: async function ({ input }) {
     const date = new Date()
-    const newItem = new Machine({
-      ...input,
-      createdAt: zoneDate(date)
-    })
+    const newItem = new Machine(input)
     const item = await newItem.save()
     const { createdAt, user } = item._doc
 
