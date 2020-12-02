@@ -20,6 +20,7 @@ module.exports = buildSchema(`
         old: Old
         items: Old
         updateMachines: Old
+        updateMoldes: Old
     }
 
     type Old{
@@ -55,7 +56,7 @@ module.exports = buildSchema(`
         spindleDiameter: Int!
         user: String!
         createdAt: Date!
-        updatedAt: Date
+        updatedAt: Date!
     }
 
     type MachinesData{

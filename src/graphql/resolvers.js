@@ -93,6 +93,10 @@ const graphqlResolver = {
     await Machine.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
+  updateMoldes: async function () {
+    await Molde.updateMany({}, { $unset: { __v: '' } })
+    return { hola: 'hola' }
+  },
   moldes: async function ({ page, add }) {
     if (!page) {
       page = 1
@@ -131,18 +135,13 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         tcycles: totalCycles,
         percent,
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
 
     return { total, items }
@@ -169,16 +168,11 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -523,14 +517,12 @@ const graphqlResolver = {
     return { total, items }
   },
   newMolde: async function ({ input }) {
-    const date = new Date()
     const newItem = new Molde({
       ...input,
-      active: true,
-      createdAt: zoneDate(date)
+      active: true
     })
     const item = await newItem.save()
-    const { createdAt, lifecycles, tcycles, user } = item._doc
+    const { createdAt, updatedAt, lifecycles, tcycles, user } = item._doc
     const percent = ((tcycles / lifecycles) * 100).toFixed(2)
 
     const existingUser = await User.findById(user, {
@@ -545,6 +537,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       percent,
       user: existingUser.name
     }
@@ -553,7 +546,7 @@ const graphqlResolver = {
     const date = new Date()
     const newItem = new Machine(input)
     const item = await newItem.save()
-    const { createdAt, user } = item._doc
+    const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -567,6 +560,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
