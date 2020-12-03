@@ -998,6 +998,10 @@ const graphqlResolver = {
     }
   },
   newReport: async function ({ input }) {
+    console.log(input)
+
+    const date = new Date(input.date)
+
     const newItem = new Report({
       date: input.date,
       shift: input.shift,
@@ -1021,10 +1025,12 @@ const graphqlResolver = {
       oper: input.oper,
       insp: input.insp,
       user: input.user,
-      dates: allDate(input.date)
+      progrs: input.progrs,
+      dates: allDate(date)
     })
     const report = await newItem.save()
-    const { _id, createdAt, user } = report._doc
+
+    const { _id, createdAt, updatedAt, user } = report._doc
 
     const production = input.production.map(async (item) => {
       const newProduction = new Production({
@@ -1076,12 +1082,20 @@ const graphqlResolver = {
     })
 
     return {
-      ...item._doc,
+      ...report._doc,
       production,
       downtimes,
       ngs,
       resines,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      machine: machine.number,
+      dtime: parseFloat(dtime),
+      wtime: parseFloat(wtime),
+      perf: parseFloat(perf),
+      avail: parseFloat(avail),
+      qual: parseFloat(qual),
+      oee: parseFloat(oee),
       user: existingUser.name
     }
   }

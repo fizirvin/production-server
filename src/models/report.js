@@ -123,18 +123,19 @@ const reportSchema = new Schema(
         type: String,
         required: true
       }
-    },
-    createdAt: {
-      type: Date,
-      required: false
-    },
-    updatedAt: {
-      type: Date,
-      required: false
     }
+    // createdAt: {
+    //   type: Date,
+    //   required: false
+    // },
+    // updatedAt: {
+    //   type: Date,
+    //   required: false
+    // }
   },
   {
-    versionKey: false
+    versionKey: false,
+    timestamps: true
   }
 )
 

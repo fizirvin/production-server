@@ -434,7 +434,7 @@ module.exports = buildSchema(`
     input NewReport {
         date: String!
         shift: String!
-        machine: String!
+        machine: ID!
         real: Int!
         ng: Int!
         ok: Int!
@@ -451,13 +451,14 @@ module.exports = buildSchema(`
         purge: Int
         comments: String
         team: String
-        oper: String
-        insp: String
+        oper: ID
+        insp: ID
         production: [ProductionInput]
         downtimes: [DowntimeInput]
         ngs: [NgInput]
         resines: [ResineInput]
         progs: Int!
+        user: ID!
     }
 
     input ProductionInput{
