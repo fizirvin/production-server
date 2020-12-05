@@ -401,16 +401,11 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -439,17 +434,12 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         time: parseFloat(time),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -475,16 +465,11 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -510,16 +495,11 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -545,16 +525,11 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -581,17 +556,12 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name,
         molde: molde.number
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -617,16 +587,11 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -652,16 +617,11 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
