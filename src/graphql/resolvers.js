@@ -659,6 +659,7 @@ const graphqlResolver = {
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
         user: user.name,
         machine: machine.number,
         dtime: parseFloat(dtime),
@@ -669,13 +670,7 @@ const graphqlResolver = {
         oee: parseFloat(oee)
       }
 
-      return (
-        (updatedAt && {
-          ...object,
-          updatedAt: fullDate(updatedAt)
-        }) ||
-        object
-      )
+      return object
     })
     return { total, items }
   },
@@ -734,7 +729,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user } = item._doc
+    const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -748,6 +743,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
@@ -758,7 +754,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user, _id } = item._doc
+    const { createdAt, updatedAt, user, _id } = item._doc
 
     const newProgram = await Program.findById(_id)
       .populate({ path: 'machine', model: 'Machine' })
@@ -781,6 +777,7 @@ const graphqlResolver = {
       molde: newProgram.molde.number,
       model: newProgram.model.name,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
@@ -791,7 +788,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user } = item._doc
+    const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -805,6 +802,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
@@ -815,7 +813,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user } = item._doc
+    const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -829,6 +827,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
@@ -839,7 +838,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user } = item._doc
+    const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -853,6 +852,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
@@ -864,7 +864,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user, _id } = item._doc
+    const { createdAt, updatedAt, user, _id } = item._doc
 
     const newShot = await Shot.findById(_id).populate({
       path: 'molde',
@@ -884,6 +884,7 @@ const graphqlResolver = {
       ...item._doc,
       molde: newShot.molde.number,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
@@ -906,7 +907,6 @@ const graphqlResolver = {
     const number = initial + prefix + num
 
     const date = new Date()
-    console.log(input)
 
     const newItem = new Profile({
       ...input,
@@ -915,7 +915,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user } = item._doc
+    const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -929,6 +929,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
@@ -940,7 +941,7 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, user } = item._doc
+    const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -954,6 +955,7 @@ const graphqlResolver = {
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
   },
