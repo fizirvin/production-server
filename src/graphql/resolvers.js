@@ -1060,6 +1060,252 @@ const graphqlResolver = {
       oee: parseFloat(oee),
       user: existingUser.name
     }
+  },
+  updateMolde: async function ({ _id, input }) {
+    const item = await Molde.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, lifecycles, tcycles, user } = item._doc
+
+    const cycles = await Production.aggregate([
+      { $match: { molde: item._id } },
+      {
+        $group: {
+          _id: '$molde',
+          cycles: { $sum: '$cycles' },
+          real: { $sum: '$real' }
+        }
+      }
+    ]).then((response) => {
+      return (response.length && response[0].cycles) || 0
+    })
+
+    const totalCycles = tcycles + cycles
+    const percent = ((totalCycles / lifecycles) * 100).toFixed(2)
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      percent,
+      user: existingUser.name
+    }
+  },
+  updateMachine: async function ({ _id, input }) {
+    const item = await Machine.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateModel: async function ({ _id, input }) {
+    const item = await Model.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateProgram: async function ({ _id, input }) {
+    const item = await Program.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const newProgram = await Program.findById(_id)
+      .populate({ path: 'machine', model: 'Machine' })
+      .populate({ path: 'molde', model: 'Molde' })
+      .populate({ path: 'model', model: 'Model' })
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      time: parseFloat(newProgram.time),
+      machine: newProgram.machine.number,
+      molde: newProgram.molde.number,
+      model: newProgram.model.name,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateMaterial: async function ({ _id, input }) {
+    const item = await Material.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateDefect: async function ({ _id, input }) {
+    const item = await Defect.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateIssue: async function ({ _id, input }) {
+    const item = await Defect.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateProfile: async function ({ _id, input }) {
+    const item = await Profile.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateUser: async function ({ _id, input }) {
+    const item = await User.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  updateShot: async function ({ _id, input }) {
+    const item = await Shot.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
+  finishShot: async function ({ _id, input }) {
+    const item = await Shot.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
   }
 }
 
