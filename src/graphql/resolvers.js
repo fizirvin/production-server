@@ -24,7 +24,7 @@ import Ng from '../models/ng'
 const safeResines = false
 const safeDowntimes = false
 const safeNgs = false
-const safeProductions = false
+const safeProductions = true
 const safeReports = false
 
 const graphqlResolver = {
@@ -149,7 +149,7 @@ const graphqlResolver = {
     const programs = await Program.find()
     const moldes = await Molde.find()
 
-    total.map(({ _id, production }) => {
+    total.map(({ _id, production, reportDate, shift }) => {
       if (production.length > 1) {
         dosprod++
       }
@@ -175,6 +175,9 @@ const graphqlResolver = {
             const realcycles = prods.real / cavities
             const production_input = {
               report: _id,
+              date: stringDate(reportDate),
+              dates: allDate(reportDate),
+              shift,
               program: program,
               molde: prods.molde,
               model: prods.partNumber,
@@ -197,6 +200,8 @@ const graphqlResolver = {
           } else {
             const production_input = {
               report: _id,
+              date: stringDate(reportDate),
+              dates: allDate(reportDate),
               program: program,
               molde: prods.molde,
               model: prods.partNumber,
@@ -674,6 +679,20 @@ const graphqlResolver = {
     })
     return { total, items }
   },
+  cycles: async function ({ cleaning }) {
+    let finalDate = new Date()
+    const cleaningDoc = await Shots.findById(cleaning)
+    const { molde, date, shift, active, end, shiftEnd } = cleaningDoc
+
+    if (!active) {
+      finalDate = end + 'T23:59:59.000Z'
+    }
+
+    const ProductionsArray = Production.find({
+      molde: molde,
+      reportDate: { $gte: date, $lte: finalDate }
+    })
+  },
   newMolde: async function ({ input }) {
     const newItem = new Molde({
       ...input,
@@ -771,11 +790,8 @@ const graphqlResolver = {
     })
 
     return {
-      ...item._doc,
+      ...newProgram._doc,
       time: parseFloat(newProgram.time),
-      machine: newProgram.machine.number,
-      molde: newProgram.molde.number,
-      model: newProgram.model.name,
       createdAt: fullDate(createdAt),
       updatedAt: fullDate(updatedAt),
       user: existingUser.name
@@ -997,6 +1013,8 @@ const graphqlResolver = {
     const production = input.production.map(async (item) => {
       const newProduction = new Production({
         report: _id,
+        date: input.date,
+        dates: allDate(date),
         ...item
       })
 
@@ -1208,7 +1226,7 @@ const graphqlResolver = {
     }
   },
   updateIssue: async function ({ _id, input }) {
-    const item = await Defect.findByIdAndUpdate(_id, input, { new: true })
+    const item = await Issue.findByIdAndUpdate(_id, input, { new: true })
     const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
