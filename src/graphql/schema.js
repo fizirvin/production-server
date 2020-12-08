@@ -18,7 +18,7 @@ module.exports = buildSchema(`
         users(page: Int, add: Int): UsersData!
         reports(page: Int, add: Int): ReportsData!
 
-        cycles(cleaning: ID): [Cycles]
+        cycles(shot: ID): [Cycles]
 
         updateMachines: Hola
         updateMoldes: Hola
@@ -167,7 +167,7 @@ module.exports = buildSchema(`
 
     type Shot{
         _id: ID!
-        molde: String!
+        molde: Molde!
         date: String!
         shift: String!
         quantity: Int
@@ -181,14 +181,13 @@ module.exports = buildSchema(`
     }
 
     type Cycles {
-        report: ID, 
-        date: String, 
-        shift: String, 
-        machine: ID, 
-        part: String, 
-        molde: String, 
-        real: Int,
-        cycles: Int
+        _id: ID!
+        date: String! 
+        shift: String! 
+        machine: String!  
+        real: Int!
+        cycles: Int!
+        quantity: Int
     }
 
     type ShotsData{

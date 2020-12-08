@@ -24,7 +24,7 @@ import Ng from '../models/ng'
 const safeResines = false
 const safeDowntimes = false
 const safeNgs = false
-const safeProductions = true
+const safeProductions = false
 const safeReports = false
 
 const graphqlResolver = {
@@ -202,6 +202,7 @@ const graphqlResolver = {
               report: _id,
               date: stringDate(reportDate),
               dates: allDate(reportDate),
+              shift,
               program: program,
               molde: prods.molde,
               model: prods.partNumber,
@@ -562,8 +563,7 @@ const graphqlResolver = {
         ...item._doc,
         createdAt: fullDate(createdAt),
         updatedAt: fullDate(updatedAt),
-        user: user.name,
-        molde: molde.number
+        user: user.name
       }
 
       return object
@@ -679,19 +679,100 @@ const graphqlResolver = {
     })
     return { total, items }
   },
-  cycles: async function ({ cleaning }) {
+  cycles: async function ({ shot }) {
     let finalDate = new Date()
-    const cleaningDoc = await Shots.findById(cleaning)
-    const { molde, date, shift, active, end, shiftEnd } = cleaningDoc
+    const item = await Shot.findById(shot)
+    const { molde, date, shift, active, end, shiftEnd } = item._doc
 
     if (!active) {
       finalDate = end + 'T23:59:59.000Z'
     }
 
-    const ProductionsArray = Production.find({
-      molde: molde,
-      reportDate: { $gte: date, $lte: finalDate }
+    const ProductionsArray = await Production.find(
+      {
+        molde: molde,
+        date: { $gte: date, $lte: finalDate }
+      },
+      {
+        dates: 0,
+        program: 0,
+        plan: 0,
+        prod: 0,
+        ng: 0,
+        ok: 0,
+        wtime: 0,
+        dtime: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0,
+        oee: 0
+      }
+    )
+      .populate({
+        path: 'report',
+        model: 'Report',
+        select: {
+          dates: 0,
+          date: 0,
+          shift: 0,
+          real: 0,
+          real: 0,
+          ng: 0,
+          ok: 0,
+          plan: 0,
+          tprod: 0,
+          cycles: 0,
+          ptime: 0,
+          wtime: 0,
+          dtime: 0,
+          avail: 0,
+          perf: 0,
+          qual: 0,
+          oee: 0,
+          purge: 0,
+          comments: 0,
+          team: 0,
+          oper: 0,
+          insp: 0,
+          user: 0,
+          progrs: 0,
+          createdAt: 0,
+          updatedAt: 0
+        },
+        populate: [{ path: 'machine', model: 'Machine' }]
+      })
+      .populate({
+        path: 'molde',
+        model: 'Molde',
+        select: {
+          _id: 0,
+          number: 0,
+          serial: 0,
+          cavities: 0,
+          lifecycles: 0,
+          tcycles: 0,
+          shot: 0,
+          active: 0,
+          user: 0,
+          createdAt: 0,
+          updatedAt: 0
+        }
+      })
+      .sort({ date: 1, shift: 1 })
+
+    const items = ProductionsArray.map((cycle) => {
+      return {
+        _id: cycle._id,
+        date: cycle.date,
+        shift: cycle.shift,
+        machine: cycle.report.machine.number,
+        real: cycle.real,
+        cycles: cycle.cycles,
+        quantity: cycle.molde.quantity
+      }
     })
+
+    return items
   },
   newMolde: async function ({ input }) {
     const newItem = new Molde({

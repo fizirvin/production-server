@@ -4,6 +4,11 @@ const productionSchema = new Schema(
   {
     report: {
       type: Schema.Types.ObjectId,
+      required: true,
+      ref: 'Report'
+    },
+    shift: {
+      type: String,
       required: true
     },
     program: {

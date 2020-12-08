@@ -12,7 +12,8 @@ const reportSchema = new Schema(
     },
     machine: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Machine'
     },
     real: {
       type: Number,
