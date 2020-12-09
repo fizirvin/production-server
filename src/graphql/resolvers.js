@@ -558,7 +558,7 @@ const graphqlResolver = {
       .sort({ _id: 1 })
 
     const items = array.map((item) => {
-      const { createdAt, updatedAt, user, molde } = item._doc
+      const { createdAt, updatedAt, user } = item._doc
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
@@ -569,6 +569,38 @@ const graphqlResolver = {
       return object
     })
     return { total, items }
+  },
+  finishShot: async function ({ _id, input }) {
+    const newShot = {
+      ...input,
+      active: false
+    }
+    const item = await Shot.findByIdAndUpdate(_id, newShot, {
+      new: true
+    }).populate({
+      path: 'molde',
+      model: 'Molde'
+    })
+
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    console.log('hola')
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
   },
   profiles: async function ({ page, add }) {
     if (!page) {
@@ -1367,26 +1399,6 @@ const graphqlResolver = {
     }
   },
   updateShot: async function ({ _id, input }) {
-    const item = await Shot.findByIdAndUpdate(_id, input, { new: true })
-    const { createdAt, updatedAt, user } = item._doc
-
-    const existingUser = await User.findById(user, {
-      password: 0,
-      level: 0,
-      active: 0,
-      createdAt: 0,
-      user: 0,
-      _id: 0
-    })
-
-    return {
-      ...item._doc,
-      createdAt: fullDate(createdAt),
-      updatedAt: fullDate(updatedAt),
-      user: existingUser.name
-    }
-  },
-  finishShot: async function ({ _id, input }) {
     const item = await Shot.findByIdAndUpdate(_id, input, { new: true })
     const { createdAt, updatedAt, user } = item._doc
 
