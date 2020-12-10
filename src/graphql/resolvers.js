@@ -2,6 +2,7 @@ import zoneDate from '../functions/zoneDate'
 import fullDate from '../functions/fullDate'
 import allDate from '../functions/allDate'
 import stringDate from '../functions/stringDate'
+import setFields from '../functions/setFields'
 
 import Molde from '../models/molde'
 import Machine from '../models/machine'
@@ -1629,17 +1630,55 @@ const graphqlResolver = {
     }
   },
   production: async function () {
-    // const item = await Shot.findByIdAndUpdate(_id, input, { new: true })
-    // const { createdAt, updatedAt, user } = item._doc
+    const today = '2020-12-10'
+    const filter = 'machine'
+    const period = 'day'
 
-    // const existingUser = await User.findById(user, {
-    //   password: 0,
-    //   level: 0,
-    //   active: 0,
-    //   createdAt: 0,
-    //   user: 0,
-    //   _id: 0
-    // })
+    const fields = setFields(period, today, filter)
+
+    const items = fields.map(async (item) => {
+      const data = await Production.aggregate([
+        { $match: { date: item.value, shift: '1' } },
+        {
+          $group: {
+            _id: { date: '$date' },
+            real: { $sum: '$real' },
+            ng: { $sum: '$ng' },
+            ok: { $sum: '$ok' },
+            plan: { $sum: '$plan' },
+            cycles: { $sum: '$cycles' },
+            wtime: { $sum: '$wtime' },
+            dtime: { $sum: '$dtime' }
+          }
+        }
+      ]).then((response) => {
+        return (
+          response.length && {
+            ...response[0],
+            date: item.value,
+            wtime: +response[0].wtime,
+            dtime: +response[0].dtime
+          }
+        )
+      })
+      console.log(data)
+      return await data
+
+      // const { createdAt, updatedAt, tcycles, lifecycles, user } = item._doc
+      // const totalCycles = tcycles + cycles
+      // const percent = ((totalCycles / lifecycles) * 100).toFixed(2)
+
+      // const object = {
+      //   ...item._doc,
+      //   createdAt: fullDate(createdAt),
+      //   updatedAt: fullDate(updatedAt),
+      //   tcycles: totalCycles,
+      //   percent,
+      //   user: user.name
+      // }
+
+      // return object
+    })
 
     return { hola: 'hola' }
   }
