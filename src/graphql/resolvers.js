@@ -21,6 +21,17 @@ import Resine from '../models/resine'
 import Downtime from '../models/downtime'
 import Ng from '../models/ng'
 
+import PMachine from '../models/pmachine'
+import PMolde from '../models/pmolde'
+import PModel from '../models/pmodel'
+import PProgram from '../models/pprogram'
+import PMaterial from '../models/pmaterial'
+import PIssue from '../models/pissue'
+import PDefect from '../models/pdefect'
+import PShot from '../models/pshot'
+import PUser from '../models/puser'
+import PProfile from '../models/pprofile'
+
 const safeResines = false
 const safeDowntimes = false
 const safeNgs = false
@@ -29,43 +40,223 @@ const safeReports = false
 
 const graphqlResolver = {
   updateMachines: async function () {
-    await Machine.updateMany({}, { $unset: { __v: '' } })
+    const past = await PMachine.find()
+
+    past.map(async (item) => {
+      const newItem = new Machine({
+        _id: item._id,
+        number: item.machineNumber,
+        serial: item.machineSerial,
+        closingForce: item.closingForce,
+        spindleDiameter: item.spindleDiameter,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+
+    // await Machine.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateMoldes: async function () {
-    await Molde.updateMany({}, { $unset: { __v: '' } })
+    const past = await PMolde.find()
+
+    past.map(async (item) => {
+      const newItem = new Molde({
+        _id: item._id,
+        number: item.moldeNumber,
+        serial: item.moldeSerial,
+        cavities: item.cavities,
+        lifecycles: item.lifecycles,
+        tcycles: item.tcycles,
+        shot: item.shot,
+        quantity: item.quantity,
+        active: item.active,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+
+    // await Molde.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateModels: async function () {
-    await Model.updateMany({}, { $unset: { __v: '' } })
+    const past = await PModel.find()
+
+    past.map(async (item) => {
+      const newItem = new Model({
+        _id: item._id,
+        number: item.partNumber,
+        name: item.partName,
+        family: item.family,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+    // await Model.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updatePrograms: async function () {
-    await Program.updateMany({}, { $unset: { __v: '' } })
+    const past = await PProgram.find()
+
+    past.map(async (item) => {
+      const newItem = new Program({
+        _id: item._id,
+        machine: item.machineNumber,
+        molde: item.moldeNumber,
+        model: item.partNumber,
+        time: item.cycleTime,
+        cycles: item.cycles,
+        capacity: item.capacity,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+    // await Program.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateMaterials: async function () {
-    await Material.updateMany({}, { $unset: { __v: '' } })
+    const past = await PMaterial.find()
+
+    past.map(async (item) => {
+      const newItem = new Material({
+        _id: item._id,
+        number: item.number,
+        description: item.description,
+        color: item.color,
+        type: item.type,
+        unit: item.unit,
+        acronym: item.acronym,
+        identification: item.identification,
+        manufacturer: item.manufacturer,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+
+    // await Material.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateIssues: async function () {
-    await Issue.updateMany({}, { $unset: { __v: '' } })
+    const past = await PIssue.find()
+
+    past.map(async (item) => {
+      const newItem = new Issue({
+        _id: item._id,
+        name: item.issueName,
+        code: item.issueCode,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+    // await Issue.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateDefects: async function () {
-    await Defect.updateMany({}, { $unset: { __v: '' } })
+    const past = await PDefect.find()
+
+    past.map(async (item) => {
+      const newItem = new Defect({
+        _id: item._id,
+        name: item.defectName,
+        code: item.defectCode,
+        injection: item.isInjection,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+    // await Defect.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateShots: async function () {
-    await Shot.updateMany({}, { $unset: { __v: '' } })
+    const past = await PShot.find()
+
+    past.map(async (item) => {
+      const newItem = new Shot({
+        _id: item._id,
+        molde: item.molde,
+        date: item.date,
+        shift: item.shift,
+        comments: item.comments,
+        active: item.active,
+        end: item.end,
+        shiftEnd: item.shiftEnd,
+        quantity: item.quantity,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+    // await Shot.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateUsers: async function () {
-    await User.updateMany({}, { $unset: { __v: '' } })
+    const past = await PUser.find()
+
+    past.map(async (item) => {
+      const newItem = new User({
+        _id: item._id,
+        name: item.name,
+        level: item.level,
+        password: item.password,
+        active: item.active,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: '2020-05-27T14:00:00.000+00:00',
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+    // await User.updateMany({}, { $unset: { __v: '' } })
     return { hola: 'hola' }
   },
   updateProfiles: async function () {
-    await Profile.updateMany({}, { $unset: { __v: '' } })
+    const past = await PProfile.find()
+
+    past.map(async (item) => {
+      const newItem = new Profile({
+        _id: item._id,
+        number: item.number,
+        firstname: item.firstname,
+        lastname: item.lastname,
+        entry: stringDate(item.entry),
+        team: item.team,
+        gender: item.gender,
+        department: item.department,
+        area: item.area,
+        position: item.position,
+        active: item.active,
+        user: '5edde9dfd3888a26048cdd20',
+        createdAt: item.createdAt,
+        updatedAt: '2020-12-09T14:00:00.000+00:00'
+      })
+
+      await newItem.save()
+    })
+
+    // await Profile.updateMany({}, { $unset: { __v: '' } })
 
     //   {
     //     $rename: {
@@ -98,17 +289,20 @@ const graphqlResolver = {
   extractDowntimes: async function () {
     let totalExtracted = 0
     const total = await Old.find()
-    total.map(({ _id, downtimeDetail }) => {
+    total.map(({ _id, downtimeDetail, reportDate, shift }) => {
       if (downtimeDetail.length > 0 && safeDowntimes) {
-        downtimeDetail.map((dt) => {
+        downtimeDetail.map(async (dt) => {
           const input = {
             report: _id,
             issue: dt.issueId,
-            mins: dt.mins
+            mins: dt.mins,
+            date: stringDate(reportDate),
+            dates: allDate(reportDate),
+            shift
           }
 
           const newDowntime = new Downtime(input)
-          newDowntime.save()
+          await newDowntime.save()
           totalExtracted++
         })
       }
@@ -259,7 +453,7 @@ const graphqlResolver = {
           createdAt,
           updatedAt
         }) => {
-          const comentarios = comments || 'no comments'
+          const comentarios = comments || ''
           const equipo = workers.team || 'no team'
           const operador = workers.operator || '5f17a67aa8d63200088369f2'
           const inspector = workers.inspector || '5f17a67aa8d63200088369f2'
