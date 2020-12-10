@@ -268,13 +268,16 @@ const graphqlResolver = {
   extractResines: async function () {
     let totalExtracted = 0
     const total = await Old.find()
-    total.map(({ _id, resines }) => {
+    total.map(async ({ _id, resines, reportDate, shift }) => {
       if (resines.length > 0 && safeResines) {
-        resines.map((resine) => {
+        await resines.map((resine) => {
           const input = {
             report: _id,
             resine: resine._id,
-            purge: resine.purge
+            purge: resine.purge,
+            date: stringDate(reportDate),
+            dates: allDate(reportDate),
+            shift
           }
 
           const newResine = new Resine(input)
@@ -289,9 +292,9 @@ const graphqlResolver = {
   extractDowntimes: async function () {
     let totalExtracted = 0
     const total = await Old.find()
-    total.map(({ _id, downtimeDetail, reportDate, shift }) => {
+    total.map(async ({ _id, downtimeDetail, reportDate, shift }) => {
       if (downtimeDetail.length > 0 && safeDowntimes) {
-        downtimeDetail.map(async (dt) => {
+        await downtimeDetail.map((dt) => {
           const input = {
             report: _id,
             issue: dt.issueId,
@@ -302,7 +305,7 @@ const graphqlResolver = {
           }
 
           const newDowntime = new Downtime(input)
-          await newDowntime.save()
+          newDowntime.save()
           totalExtracted++
         })
       }
@@ -313,15 +316,18 @@ const graphqlResolver = {
   extractNgs: async function () {
     let totalExtracted = 0
     const total = await Old.find()
-    total.map(({ _id, defects }) => {
+    total.map(async ({ _id, defects, reportDate, shift }) => {
       if (defects.length > 0 && safeNgs) {
-        defects.map((defect) => {
+        await defects.map((defect) => {
           const input = {
             report: _id,
             defect: defect._id,
             model: defect.partNumber,
             molde: defect.molde,
-            pieces: defect.defectPcs
+            pieces: defect.defectPcs,
+            date: stringDate(reportDate),
+            dates: allDate(reportDate),
+            shift
           }
 
           const newNg = new Ng(input)
@@ -343,13 +349,13 @@ const graphqlResolver = {
     const programs = await Program.find()
     const moldes = await Molde.find()
 
-    total.map(({ _id, production, reportDate, shift }) => {
+    total.map(async ({ _id, production, reportDate, shift }) => {
       if (production.length > 1) {
         dosprod++
       }
 
       if (production.length > 0 && safeProductions) {
-        production.map((prods) => {
+        await production.map((prods) => {
           const cycles = prods.cycles || 0
           const program = prods.program.toString()
           const productivity = programs.find(
@@ -1322,6 +1328,7 @@ const graphqlResolver = {
         report: _id,
         date: input.date,
         dates: allDate(date),
+        shift: input.shift,
         ...item
       })
 
@@ -1332,6 +1339,9 @@ const graphqlResolver = {
     const downtimes = input.downtimes.map(async (item) => {
       const newDowntime = new Downtime({
         report: _id,
+        date: input.date,
+        dates: allDate(date),
+        shift: input.shift,
         ...item
       })
 
@@ -1342,6 +1352,9 @@ const graphqlResolver = {
     const ngs = input.ngs.map(async (item) => {
       const newNg = new Ng({
         report: _id,
+        date: input.date,
+        dates: allDate(date),
+        shift: input.shift,
         ...item
       })
 
@@ -1352,6 +1365,9 @@ const graphqlResolver = {
     const resines = input.resines.map(async (item) => {
       const newResine = new Resine({
         report: _id,
+        date: input.date,
+        dates: allDate(date),
+        shift: input.shift,
         ...item
       })
 
@@ -1611,6 +1627,21 @@ const graphqlResolver = {
       updatedAt: fullDate(updatedAt),
       user: existingUser.name
     }
+  },
+  production: async function () {
+    // const item = await Shot.findByIdAndUpdate(_id, input, { new: true })
+    // const { createdAt, updatedAt, user } = item._doc
+
+    // const existingUser = await User.findById(user, {
+    //   password: 0,
+    //   level: 0,
+    //   active: 0,
+    //   createdAt: 0,
+    //   user: 0,
+    //   _id: 0
+    // })
+
+    return { hola: 'hola' }
   }
 }
 

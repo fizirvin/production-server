@@ -19,6 +19,7 @@ module.exports = buildSchema(`
         reports(page: Int, add: Int): ReportsData!
 
         cycles(shot: ID): [Cycles]
+        production: Hola
 
         updateMachines: Hola
         updateMoldes: Hola
