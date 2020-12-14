@@ -40,6 +40,15 @@ const safeProductions = false
 const safeReports = false
 
 const graphqlResolver = {
+  deleteReport: async function () {
+    await Report.deleteMany({ date: '2020-12-18' })
+    await Production.deleteMany({ date: '2020-12-18' })
+    await Resine.deleteMany({ date: '2020-12-18' })
+    await Downtime.deleteMany({ date: '2020-12-18' })
+    await Ng.deleteMany({ date: '2020-12-18' })
+
+    return { hola: 'hola' }
+  },
   updateMachines: async function () {
     const past = await PMachine.find()
 
@@ -204,8 +213,8 @@ const graphqlResolver = {
         shiftEnd: item.shiftEnd,
         quantity: item.quantity,
         user: '5edde9dfd3888a26048cdd20',
-        createdAt: '2020-05-27T14:00:00.000+00:00',
-        updatedAt: '2020-12-09T14:00:00.000+00:00'
+        createdAt: `${item.date}T14:00:00.000+00:00`,
+        updatedAt: '2020-12-12T14:00:00.000+00:00'
       })
 
       await newItem.save()
@@ -514,7 +523,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Molde.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -563,7 +572,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Machine.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -593,7 +602,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Model.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -623,7 +632,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Program.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -657,7 +666,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Material.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -687,7 +696,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Issue.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -717,7 +726,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 200
     const total = await Defect.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -747,11 +756,11 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Shot.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
-    const array = await Shot.find()
+    const array = await Shot.find({ active: true })
       .skip((page - 1) * perPage + add)
       .limit(perPage)
       .populate({ path: 'user', model: 'User' })
@@ -794,8 +803,6 @@ const graphqlResolver = {
       _id: 0
     })
 
-    console.log('hola')
-
     return {
       ...item._doc,
       createdAt: fullDate(createdAt),
@@ -810,11 +817,11 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Profile.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
-    const array = await Profile.find()
+    const array = await Profile.find({ active: true })
       .skip((page - 1) * perPage + add)
       .limit(perPage)
       .populate({ path: 'user', model: 'User' })
@@ -840,7 +847,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await User.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -870,7 +877,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
-    const perPage = 25
+    const perPage = 100
     const total = await Report.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
@@ -1291,7 +1298,6 @@ const graphqlResolver = {
   },
   newReport: async function ({ input }) {
     console.log(input)
-
     const date = new Date(input.date)
 
     const newItem = new Report({
@@ -1317,12 +1323,12 @@ const graphqlResolver = {
       oper: input.oper,
       insp: input.insp,
       user: input.user,
-      progrs: input.progrs,
+      progrs: input.production.length,
       dates: allDate(date)
     })
     const report = await newItem.save()
 
-    const { _id, createdAt, updatedAt, user } = report._doc
+    const { _id, createdAt, machine, updatedAt, user } = report._doc
 
     const production = input.production.map(async (item) => {
       const newProduction = new Production({

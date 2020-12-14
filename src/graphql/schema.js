@@ -17,6 +17,7 @@ module.exports = buildSchema(`
         profiles(page: Int, add: Int): ProfilesData!
         users(page: Int, add: Int): UsersData!
         reports(page: Int, add: Int): ReportsData!
+        deleteReport: Hola
 
         cycles(shot: ID): [Cycles]
         production: Hola
@@ -556,7 +557,6 @@ module.exports = buildSchema(`
         downtimes: [DowntimeInput]
         ngs: [NgInput]
         resines: [ResineInput]
-        progs: Int!
         user: ID!
     }
 
@@ -621,7 +621,6 @@ module.exports = buildSchema(`
         downtimes: [DowntimeInput]
         ngs: [NgInput]
         resines: [ResineInput]
-        progs: Int!
         user: ID!
     }
 
