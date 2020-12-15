@@ -240,7 +240,7 @@ module.exports = buildSchema(`
         _id: ID!
         date: String!
         shift: String!
-        machine: String!
+        machine: Machine!
         real: Int!
         ng: Int!
         ok: Int!
@@ -272,6 +272,7 @@ module.exports = buildSchema(`
 
     type Production{
         _id: ID
+        shift: String
         program: ID
         molde: ID
         model: ID
@@ -287,12 +288,17 @@ module.exports = buildSchema(`
         perf: Decimal
         qual: Decimal
         oee: Decimal
+        date: String
+        dates: Dates
     }
 
     type Downtime{
         _id: ID
         issue: ID
         mins: Int
+        shift: String
+        date: String
+        dates: Dates
     }
 
     type Ng{
@@ -301,12 +307,19 @@ module.exports = buildSchema(`
         model: ID
         molde: ID
         pieces: Int
+        shift: String
+        date: String
+        dates: Dates
+        
     }
 
     type Resine{
         _id: ID
         resine: ID
         purge: Int
+        shift: String
+        date: String
+        dates: Dates
     }
 
     type Dates{

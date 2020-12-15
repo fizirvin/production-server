@@ -89,7 +89,8 @@ const reportSchema = new Schema(
     },
     user: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'User'
     },
     progrs: {
       type: Number,

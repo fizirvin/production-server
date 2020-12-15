@@ -33,9 +33,9 @@ import PShot from '../models/pshot'
 import PUser from '../models/puser'
 import PProfile from '../models/pprofile'
 
-const safeResines = false
+const safeResines = true
 const safeDowntimes = false
-const safeNgs = false
+const safeNgs = true
 const safeProductions = false
 const safeReports = false
 
@@ -283,7 +283,7 @@ const graphqlResolver = {
         await resines.map((resine) => {
           const input = {
             report: _id,
-            resine: resine._id,
+            resine: resine.resine,
             purge: resine.purge,
             date: stringDate(reportDate),
             dates: allDate(reportDate),
@@ -331,7 +331,7 @@ const graphqlResolver = {
         await defects.map((defect) => {
           const input = {
             report: _id,
-            defect: defect._id,
+            defect: defect.defect,
             model: defect.partNumber,
             molde: defect.molde,
             pieces: defect.defectPcs,
@@ -888,8 +888,9 @@ const graphqlResolver = {
       .populate({ path: 'machine', model: 'Machine' })
       .sort({ date: -1 })
 
-    const items = array.map((item) => {
+    const items = array.map(async (item) => {
       const {
+        _id,
         createdAt,
         updatedAt,
         user,
@@ -901,18 +902,76 @@ const graphqlResolver = {
         qual,
         oee
       } = item._doc
+
+      const productions = await Production.find(
+        { report: _id },
+        {
+          _id: 0,
+          report: 0,
+          dates: 0,
+          date: 0,
+          shift: 0
+        }
+      )
+      const resines = await Resine.find(
+        { report: _id },
+        {
+          _id: 0,
+          report: 0,
+          dates: 0,
+          date: 0,
+          shift: 0
+        }
+      )
+      const ngs = await Ng.find(
+        { report: _id },
+        {
+          _id: 0,
+          report: 0,
+          dates: 0,
+          date: 0,
+          shift: 0
+        }
+      )
+      const downtimes = await Downtime.find(
+        { report: _id },
+        {
+          _id: 0,
+          report: 0,
+          dates: 0,
+          date: 0,
+          shift: 0
+        }
+      )
+
+      const formatProductions = productions.map((item) => {
+        return {
+          ...item._doc,
+          dtime: +item._doc.dtime,
+          wtime: +item._doc.wtime,
+          perf: +item._doc.perf,
+          avail: +item._doc.avail,
+          qual: +item._doc.qual,
+          oee: +item._doc.oee
+        }
+      })
+
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
         updatedAt: fullDate(updatedAt),
         user: user.name,
-        machine: machine.number,
-        dtime: parseFloat(dtime),
-        wtime: parseFloat(wtime),
-        perf: parseFloat(perf),
-        avail: parseFloat(avail),
-        qual: parseFloat(qual),
-        oee: parseFloat(oee)
+        machine: machine,
+        dtime: +dtime,
+        wtime: +wtime,
+        perf: +perf,
+        avail: +avail,
+        qual: +qual,
+        oee: +oee,
+        production: formatProductions,
+        resines: resines,
+        ngs: ngs,
+        downtimes: downtimes
       }
 
       return object
@@ -1297,8 +1356,7 @@ const graphqlResolver = {
     }
   },
   newReport: async function ({ input }) {
-    console.log(input)
-    const date = new Date(input.date)
+    const typeDate = new Date(input.date)
 
     const newItem = new Report({
       date: input.date,
@@ -1324,18 +1382,18 @@ const graphqlResolver = {
       insp: input.insp,
       user: input.user,
       progrs: input.production.length,
-      dates: allDate(date)
+      dates: allDate(typeDate)
     })
     const report = await newItem.save()
 
-    const { _id, createdAt, machine, updatedAt, user } = report._doc
+    const { _id, date, shift } = report._doc
 
     const production = input.production.map(async (item) => {
       const newProduction = new Production({
         report: _id,
-        date: input.date,
-        dates: allDate(date),
-        shift: input.shift,
+        date: date,
+        dates: allDate(typeDate),
+        shift: shift,
         ...item
       })
 
@@ -1346,9 +1404,9 @@ const graphqlResolver = {
     const downtimes = input.downtimes.map(async (item) => {
       const newDowntime = new Downtime({
         report: _id,
-        date: input.date,
-        dates: allDate(date),
-        shift: input.shift,
+        date: date,
+        dates: allDate(typeDate),
+        shift: shift,
         ...item
       })
 
@@ -1359,9 +1417,9 @@ const graphqlResolver = {
     const ngs = input.ngs.map(async (item) => {
       const newNg = new Ng({
         report: _id,
-        date: input.date,
-        dates: allDate(date),
-        shift: input.shift,
+        date: date,
+        dates: allDate(typeDate),
+        shift: shift,
         ...item
       })
 
@@ -1372,9 +1430,9 @@ const graphqlResolver = {
     const resines = input.resines.map(async (item) => {
       const newResine = new Resine({
         report: _id,
-        date: input.date,
-        dates: allDate(date),
-        shift: input.shift,
+        date: date,
+        dates: allDate(typeDate),
+        shift: shift,
         ...item
       })
 
@@ -1382,31 +1440,40 @@ const graphqlResolver = {
       return { ...resineSaved._doc }
     })
 
-    const existingUser = await User.findById(user, {
-      password: 0,
-      level: 0,
-      active: 0,
-      createdAt: 0,
-      user: 0,
-      _id: 0
-    })
+    const createdReport = await Report.findById(_id)
+      .populate({
+        path: 'user',
+        model: 'User',
+        select: {
+          password: 0,
+          level: 0,
+          active: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          user: 0,
+          _id: 0
+        }
+      })
+      .populate({ path: 'machine', model: 'Machine' })
+      .sort({ date: -1 })
+    console.log(downtimes)
 
     return {
-      ...report._doc,
+      ...createdReport._doc,
       production,
       downtimes,
       ngs,
       resines,
-      createdAt: fullDate(createdAt),
-      updatedAt: fullDate(updatedAt),
-      machine: machine.number,
-      dtime: parseFloat(dtime),
-      wtime: parseFloat(wtime),
-      perf: parseFloat(perf),
-      avail: parseFloat(avail),
-      qual: parseFloat(qual),
-      oee: parseFloat(oee),
-      user: existingUser.name
+      createdAt: fullDate(createdReport._doc.createdAt),
+      updatedAt: fullDate(createdReport._doc.updatedAt),
+      machine: createdReport._doc.machine.number,
+      dtime: parseFloat(createdReport._doc.dtime),
+      wtime: parseFloat(createdReport._doc.wtime),
+      perf: parseFloat(createdReport._doc.perf),
+      avail: parseFloat(createdReport._doc.avail),
+      qual: parseFloat(createdReport._doc.qual),
+      oee: parseFloat(createdReport._doc.oee),
+      user: createdReport._doc.user.name
     }
   },
   updateMolde: async function ({ _id, input }) {
