@@ -1084,7 +1084,30 @@ const graphqlResolver = {
       }
     })
 
-    return items
+    let filterItems = [...items]
+
+    if (shift === '2') {
+      const removeItem = items.find(
+        (item) => item.date === date && item.shift === '1'
+      )
+      if (!removeItem) {
+        filterItems = [...items]
+      } else {
+        filterItems = items.filter((item) => item._id !== removeItem._id)
+      }
+    }
+    if (!active && shiftEnd === '1') {
+      const removeItem = items.find(
+        (item) => item.date === end && item.shift === '2'
+      )
+      if (!removeItem) {
+        filterItems = [...filterItems]
+      } else {
+        filterItems = filterItems.filter((item) => item._id !== removeItem._id)
+      }
+    }
+
+    return filterItems
   },
   newMolde: async function ({ input }) {
     const newItem = new Molde({
