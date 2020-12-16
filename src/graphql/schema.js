@@ -32,11 +32,13 @@ module.exports = buildSchema(`
         updateShots: Hola
         updateProfiles: Hola
         updateUsers: Hola
+        updateReports: Extracted
         extractResines: Extracted
         extractDowntimes: Extracted
         extractNgs: Extracted
         extractProductions: Extracted
         extractReports: Extracted
+        updateReportsProd: Extracted
     }
 
     type Hola{
@@ -490,13 +492,9 @@ module.exports = buildSchema(`
     }
 
     input UpdateShot{
-        molde: ID
-        date: String
-        shift: String
-        quantity: Int
-        end: String
-        shiftEnd: String
-        active: Boolean
+        molde: ID!
+        date: String!
+        shift: String!
         comments: String
     }
 

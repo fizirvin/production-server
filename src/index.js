@@ -21,7 +21,7 @@ app.use(
   graphqlHTTP({
     schema: graphqlSchema,
     rootValue: graphqlResolver,
-    graphiql: true,
+    graphiql: false,
     customFormatErrorFn(err) {
       if (err.message.startsWith('Database Error: ')) {
         return new Error('Internal server error')

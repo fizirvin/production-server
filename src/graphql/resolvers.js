@@ -41,11 +41,11 @@ const safeReports = false
 
 const graphqlResolver = {
   deleteReport: async function () {
-    await Report.deleteMany({ date: '2020-12-18' })
-    await Production.deleteMany({ date: '2020-12-18' })
-    await Resine.deleteMany({ date: '2020-12-18' })
-    await Downtime.deleteMany({ date: '2020-12-18' })
-    await Ng.deleteMany({ date: '2020-12-18' })
+    await Report.deleteMany({ date: '2020-12-16' })
+    await Production.deleteMany({ date: '2020-12-16' })
+    await Resine.deleteMany({ date: '2020-12-16' })
+    await Downtime.deleteMany({ date: '2020-12-16' })
+    await Ng.deleteMany({ date: '2020-12-16' })
 
     return { hola: 'hola' }
   },
@@ -274,6 +274,49 @@ const graphqlResolver = {
     //     }
     //   }
     return { hola: 'hola' }
+  },
+  updateReports: async function () {
+    const past = await Report.find({ cycles: 0 })
+    let updates = 0
+    past.map(async (item) => {
+      const production = await Production.find({ report: item._id })
+      const cycles =
+        production.reduce((a, b) => {
+          return a + b.cycles
+        }, 0) || 0
+
+      const resines = await Resine.find({ report: item._id })
+      const purge =
+        resines.reduce((a, b) => {
+          return a + b.purge
+        }, 0) || 0
+
+      await Report.findByIdAndUpdate(item._id, {
+        cycles: cycles,
+        purge: purge
+      })
+      updates++
+    })
+
+    return { total: updates }
+  },
+  updateReportsProd: async function () {
+    const past = await Report.find({ tprod: 0 })
+    let updates = 0
+    past.map(async (item) => {
+      const production = await Production.find({ report: item._id })
+
+      const tprod = production.reduce((a, b) => {
+        return a + b.prod || 0
+      }, 0)
+
+      await Report.findByIdAndUpdate(item._id, {
+        tprod: tprod
+      })
+      updates++
+    })
+
+    return { total: updates }
   },
   extractResines: async function () {
     let totalExtracted = 0
@@ -760,12 +803,12 @@ const graphqlResolver = {
     const total = await Shot.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
 
-    const array = await Shot.find({ active: true })
+    const array = await Shot.find()
       .skip((page - 1) * perPage + add)
       .limit(perPage)
       .populate({ path: 'user', model: 'User' })
       .populate({ path: 'molde', model: 'Molde' })
-      .sort({ _id: 1 })
+      .sort({ date: -1 })
 
     const items = array.map((item) => {
       const { createdAt, updatedAt, user } = item._doc
@@ -779,36 +822,6 @@ const graphqlResolver = {
       return object
     })
     return { total, items }
-  },
-  finishShot: async function ({ _id, input }) {
-    const newShot = {
-      ...input,
-      active: false
-    }
-    const item = await Shot.findByIdAndUpdate(_id, newShot, {
-      new: true
-    }).populate({
-      path: 'molde',
-      model: 'Molde'
-    })
-
-    const { createdAt, updatedAt, user } = item._doc
-
-    const existingUser = await User.findById(user, {
-      password: 0,
-      level: 0,
-      active: 0,
-      createdAt: 0,
-      user: 0,
-      _id: 0
-    })
-
-    return {
-      ...item._doc,
-      createdAt: fullDate(createdAt),
-      updatedAt: fullDate(updatedAt),
-      user: existingUser.name
-    }
   },
   profiles: async function ({ page, add }) {
     if (!page) {
@@ -1260,29 +1273,46 @@ const graphqlResolver = {
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
-    const { createdAt, updatedAt, user, _id } = item._doc
+    const { createdAt, updatedAt, _id } = item._doc
 
-    const newShot = await Shot.findById(_id).populate({
-      path: 'molde',
-      model: 'Molde'
-    })
+    const newShot = await Shot.findById(_id)
+      .populate({
+        path: 'molde',
+        model: 'Molde',
+        select: {
+          serial: 0,
+          cavities: 0,
+          lifecycles: 0,
+          shot: 0,
+          quantity: 0,
+          active: 0,
+          user: 0,
+          createdAt: 0,
+          updatedAt: 0
+        }
+      })
+      .populate({
+        path: 'user',
+        model: 'User',
+        select: {
+          password: 0,
+          level: 0,
+          active: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          user: 0,
+          _id: 0
+        }
+      })
 
-    const existingUser = await User.findById(user, {
-      password: 0,
-      level: 0,
-      active: 0,
-      createdAt: 0,
-      user: 0,
-      _id: 0
-    })
-
-    return {
-      ...item._doc,
-      molde: newShot.molde.number,
+    const object = {
+      ...newShot._doc,
       createdAt: fullDate(createdAt),
       updatedAt: fullDate(updatedAt),
-      user: existingUser.name
+      user: newShot._doc.user.name
     }
+
+    return object
   },
   newProfile: async function ({ input }) {
     const { team } = input
@@ -1384,6 +1414,19 @@ const graphqlResolver = {
       progrs: input.production.length,
       dates: allDate(typeDate)
     })
+
+    const already = await Report.find({
+      machine: newItem.machine,
+      date: newItem.date,
+      shift: newItem.shift
+    })
+    if (!already.length == 0) {
+      const error = new Error(
+        'production for this machine, shift and date is already reported'
+      )
+      throw error
+    }
+
     const report = await newItem.save()
 
     const { _id, date, shift } = report._doc
@@ -1456,9 +1499,8 @@ const graphqlResolver = {
       })
       .populate({ path: 'machine', model: 'Machine' })
       .sort({ date: -1 })
-    console.log(downtimes)
 
-    return {
+    const object = {
       ...createdReport._doc,
       production,
       downtimes,
@@ -1466,7 +1508,6 @@ const graphqlResolver = {
       resines,
       createdAt: fullDate(createdReport._doc.createdAt),
       updatedAt: fullDate(createdReport._doc.updatedAt),
-      machine: createdReport._doc.machine.number,
       dtime: parseFloat(createdReport._doc.dtime),
       wtime: parseFloat(createdReport._doc.wtime),
       perf: parseFloat(createdReport._doc.perf),
@@ -1475,6 +1516,8 @@ const graphqlResolver = {
       oee: parseFloat(createdReport._doc.oee),
       user: createdReport._doc.user.name
     }
+
+    return object
   },
   updateMolde: async function ({ _id, input }) {
     const item = await Molde.findByIdAndUpdate(_id, input, { new: true })
@@ -1684,6 +1727,56 @@ const graphqlResolver = {
   },
   updateShot: async function ({ _id, input }) {
     const item = await Shot.findByIdAndUpdate(_id, input, { new: true })
+      .populate({
+        path: 'molde',
+        model: 'Molde',
+        select: {
+          serial: 0,
+          cavities: 0,
+          lifecycles: 0,
+          shot: 0,
+          quantity: 0,
+          active: 0,
+          user: 0,
+          createdAt: 0,
+          updatedAt: 0
+        }
+      })
+      .populate({
+        path: 'user',
+        model: 'User',
+        select: {
+          password: 0,
+          level: 0,
+          active: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          user: 0,
+          _id: 0
+        }
+      })
+
+    const { createdAt, updatedAt, user } = item._doc
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: user.name
+    }
+  },
+  finishShot: async function ({ _id, input }) {
+    const newShot = {
+      ...input,
+      active: false
+    }
+    const item = await Shot.findByIdAndUpdate(_id, newShot, {
+      new: true
+    }).populate({
+      path: 'molde',
+      model: 'Molde'
+    })
+
     const { createdAt, updatedAt, user } = item._doc
 
     const existingUser = await User.findById(user, {
@@ -1700,6 +1793,121 @@ const graphqlResolver = {
       createdAt: fullDate(createdAt),
       updatedAt: fullDate(updatedAt),
       user: existingUser.name
+    }
+  },
+  updateReport: async function ({ _id, input }) {
+    const typeDate = new Date(input.date)
+
+    const itemInput = {
+      date: input.date,
+      shift: input.shift,
+      machine: input.machine,
+      real: input.real,
+      ng: input.ng,
+      ok: input.ok,
+      plan: input.plan,
+      tprod: input.tprod,
+      cycles: input.cycles,
+      ptime: input.ptime,
+      wtime: input.wtime,
+      dtime: input.dtime,
+      avail: input.avail,
+      perf: input.perf,
+      qual: input.qual,
+      oee: input.oee,
+      purge: input.purge,
+      comments: input.comments,
+      team: input.team,
+      oper: input.oper,
+      insp: input.insp,
+      user: input.user,
+      progrs: input.production.length,
+      dates: allDate(typeDate)
+    }
+    const updatedReport = await Report.findByIdAndUpdate(_id, itemInput, {
+      new: true
+    })
+      .populate({
+        path: 'machine',
+        model: 'Machine'
+      })
+      .populate({
+        path: 'user',
+        model: 'User'
+      })
+
+    await Production.deleteMany({ report: _id })
+    await Resine.deleteMany({ date: _id })
+    await Downtime.deleteMany({ date: _id })
+    await Ng.deleteMany({ date: _id })
+
+    const production = input.production.map(async (item) => {
+      const newProduction = new Production({
+        report: _id,
+        date: updatedReport._doc.date,
+        dates: allDate(typeDate),
+        shift: updatedReport._doc.shift,
+        ...item
+      })
+
+      const productionSaved = await newProduction.save()
+      return { ...productionSaved._doc }
+    })
+
+    const downtimes = input.downtimes.map(async (item) => {
+      const newDowntime = new Downtime({
+        report: _id,
+        date: updatedReport._doc.date,
+        dates: allDate(typeDate),
+        shift: updatedReport._doc.shift,
+        ...item
+      })
+
+      const downtimeSaved = await newDowntime.save()
+      return { ...downtimeSaved._doc }
+    })
+
+    const ngs = input.ngs.map(async (item) => {
+      const newNg = new Ng({
+        report: _id,
+        date: updatedReport._doc.date,
+        dates: allDate(typeDate),
+        shift: updatedReport._doc.shift,
+        ...item
+      })
+
+      const ngSaved = await newNg.save()
+      return { ...ngSaved._doc }
+    })
+
+    const resines = input.resines.map(async (item) => {
+      const newResine = new Resine({
+        report: _id,
+        date: updatedReport._doc.date,
+        dates: allDate(typeDate),
+        shift: updatedReport._doc.shift,
+        ...item
+      })
+
+      const resineSaved = await newResine.save()
+      return { ...resineSaved._doc }
+    })
+
+    return {
+      ...updatedReport._doc,
+      production,
+      downtimes,
+      ngs,
+      resines,
+      createdAt: fullDate(updatedReport._doc.createdAt),
+      updatedAt: fullDate(updatedReport._doc.updatedAt),
+      dtime: parseFloat(updatedReport._doc.dtime),
+      wtime: parseFloat(updatedReport._doc.wtime),
+      perf: parseFloat(updatedReport._doc.perf),
+      avail: parseFloat(updatedReport._doc.avail),
+      qual: parseFloat(updatedReport._doc.qual),
+      oee: parseFloat(updatedReport._doc.oee),
+      user: updatedReport._doc.user.name
     }
   },
   production: async function () {
