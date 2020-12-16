@@ -1598,12 +1598,11 @@ const graphqlResolver = {
   },
   updateProgram: async function ({ _id, input }) {
     const item = await Program.findByIdAndUpdate(_id, input, { new: true })
-    const { createdAt, updatedAt, user } = item._doc
-
-    const newProgram = await Program.findById(_id)
       .populate({ path: 'machine', model: 'Machine' })
       .populate({ path: 'molde', model: 'Molde' })
       .populate({ path: 'model', model: 'Model' })
+
+    const { createdAt, updatedAt, user, time } = item._doc
 
     const existingUser = await User.findById(user, {
       password: 0,
@@ -1616,10 +1615,7 @@ const graphqlResolver = {
 
     return {
       ...item._doc,
-      time: parseFloat(newProgram.time),
-      machine: newProgram.machine.number,
-      molde: newProgram.molde.number,
-      model: newProgram.model.name,
+      time: parseFloat(time),
       createdAt: fullDate(createdAt),
       updatedAt: fullDate(updatedAt),
       user: existingUser.name
