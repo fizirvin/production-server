@@ -10,7 +10,7 @@ export default function keyValueMachine(response, resines, key, date, machine) {
     return (
       response
         .filter(
-          (filt) => filt.date === date && filt.report.machine.number === machine
+          (filt) => filt.date === date && filt.report.machine._id === machine
         )
         .reduce((a, b) => {
           return +(a + +b[key]).toFixed(2)
@@ -21,13 +21,13 @@ export default function keyValueMachine(response, resines, key, date, machine) {
     return +(
       (response
         .filter(
-          (filt) => filt.date === date && filt.report.machine.number === machine
+          (filt) => filt.date === date && filt.report.machine._id === machine
         )
         .reduce((a, b) => {
           return +(a + +b.oee).toFixed(2)
         }, 0) || 0) /
         response.filter(
-          (filt) => filt.date === date && filt.report.machine.number === machine
+          (filt) => filt.date === date && filt.report.machine._id === machine
         ).length || 0
     ).toFixed(2)
   }
@@ -35,7 +35,7 @@ export default function keyValueMachine(response, resines, key, date, machine) {
     return (
       resines
         .filter(
-          (filt) => filt.date === date && filt.report.machine.number === machine
+          (filt) => filt.date === date && filt.report.machine._id === machine
         )
         .reduce((a, b) => {
           return +(a + +b.purge).toFixed(2)

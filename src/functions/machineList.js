@@ -5,8 +5,8 @@ export default function machineList(response) {
 
   const uniqueMachineList = Array.from(
     new Set(
-      machines.map(({ number }) => {
-        const list = machines.find((item) => item.number === number).number
+      machines.map(({ _id }) => {
+        const list = machines.find((item) => item._id === _id)
         return list
       })
     )

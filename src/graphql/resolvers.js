@@ -1,3 +1,4 @@
+import { rows } from '../constants/rows'
 import zoneDate from '../functions/zoneDate'
 import fullDate from '../functions/fullDate'
 import allDate from '../functions/allDate'
@@ -9,6 +10,9 @@ import keyValueDowntime from '../functions/keyValueDowntime'
 import keyValueResine from '../functions/keyValueResine'
 import keyValueDefect from '../functions/keyValueDefect'
 import machineList from '../functions/machineList'
+
+import filterMachines from '../functions/filterMachines'
+
 import downtimeList from '../functions/downtimeList'
 import resinesList from '../functions/resinesList'
 import defectList from '../functions/defectList'
@@ -1938,19 +1942,37 @@ const graphqlResolver = {
       user: updatedReport._doc.user.name
     }
   },
-  production: async function () {
-    const today = '2020-12-10'
-    const filter = 'machine'
-    const period = 'day'
+  production: async function ({ today, filter, period, shifts }) {
+    if (!today) {
+      const day = new Date()
+      today = stringDate(day)
+    }
+    if (!filter) {
+      filter = 'machine'
+    }
+    if (!period) {
+      period = 'day'
+    }
+    if (!shifts) {
+      shifts = ['1', '2']
+    }
+    if (shifts === '1') {
+      shifts = ['1']
+    }
+    if (shifts === '2') {
+      shifts = ['2']
+    }
+    if (shifts === 'both') {
+      shifts = ['1', '2']
+    }
 
     const fields = setFields(period, today, filter)
-
     const formatFields = fields.map((item) => item.value)
 
     const data = await Production.find(
       {
         date: { $in: formatFields },
-        shift: { $in: ['1', '2'] }
+        shift: { $in: shifts }
       },
       {
         _id: 0,
@@ -1971,7 +1993,6 @@ const graphqlResolver = {
           dates: 0,
           date: 0,
           shift: 0,
-          real: 0,
           real: 0,
           ng: 0,
           ok: 0,
@@ -1999,7 +2020,6 @@ const graphqlResolver = {
           path: 'machine',
           model: Machine,
           select: {
-            _id: 0,
             serial: 0,
             closingForce: 0,
             spindleDiameter: 0,
@@ -2009,11 +2029,27 @@ const graphqlResolver = {
           }
         }
       })
+      .populate({
+        path: 'molde',
+        Model: 'Molde',
+        select: {
+          serial: 0,
+          cavities: 0,
+          lifecycles: 0,
+          tcycles: 0,
+          shot: 0,
+          quantity: 0,
+          active: 0,
+          user: 0,
+          createdAt: 0,
+          updatedAt: 0
+        }
+      })
       .then(async (response) => {
         const resines = await Resine.find(
           {
             date: { $in: formatFields },
-            shift: { $in: ['1', '2'] }
+            shift: { $in: shifts }
           },
           {
             _id: 0,
@@ -2029,7 +2065,6 @@ const graphqlResolver = {
               dates: 0,
               date: 0,
               shift: 0,
-              real: 0,
               real: 0,
               ng: 0,
               ok: 0,
@@ -2057,7 +2092,6 @@ const graphqlResolver = {
               path: 'machine',
               model: Machine,
               select: {
-                _id: 0,
                 serial: 0,
                 closingForce: 0,
                 spindleDiameter: 0,
@@ -2086,7 +2120,7 @@ const graphqlResolver = {
         const downtimes = await Downtime.find(
           {
             date: { $in: formatFields },
-            shift: { $in: ['1', '2'] }
+            shift: { $in: shifts }
           },
           {
             _id: 0,
@@ -2102,7 +2136,6 @@ const graphqlResolver = {
               dates: 0,
               date: 0,
               shift: 0,
-              real: 0,
               real: 0,
               ng: 0,
               ok: 0,
@@ -2130,7 +2163,6 @@ const graphqlResolver = {
               path: 'machine',
               model: Machine,
               select: {
-                _id: 0,
                 serial: 0,
                 closingForce: 0,
                 spindleDiameter: 0,
@@ -2154,7 +2186,7 @@ const graphqlResolver = {
         const ngs = await Ng.find(
           {
             date: { $in: formatFields },
-            shift: { $in: ['1', '2'] }
+            shift: { $in: shifts }
           },
           {
             _id: 0,
@@ -2170,7 +2202,6 @@ const graphqlResolver = {
               dates: 0,
               date: 0,
               shift: 0,
-              real: 0,
               real: 0,
               ng: 0,
               ok: 0,
@@ -2198,7 +2229,6 @@ const graphqlResolver = {
               path: 'machine',
               model: Machine,
               select: {
-                _id: 0,
                 serial: 0,
                 closingForce: 0,
                 spindleDiameter: 0,
@@ -2219,18 +2249,6 @@ const graphqlResolver = {
               updatedAt: 0
             }
           })
-
-        const rows = [
-          { row: 'Total Real', key: 'real' },
-          { row: 'Total NG', key: 'ng' },
-          { row: 'Total OK', key: 'ok' },
-          { row: 'Total Plan', key: 'plan' },
-          { row: 'Total Cycles', key: 'cycles' },
-          { row: 'Total Worktime', key: 'wtime' },
-          { row: 'Total Downtime', key: 'dtime' },
-          { row: 'Total OEE', key: 'oee' },
-          { row: 'Total Purge', key: 'purge' }
-        ]
 
         const machines = machineList(response)
         const issues = downtimeList(downtimes)
@@ -2253,29 +2271,23 @@ const graphqlResolver = {
               }, 0) || 0
           }
 
-          const subData = machines.map((machine) => {
-            const sub = fields.map((item) => {
-              return {
-                date: item.value,
-                field: item.field,
-                value: keyValueMachine(
-                  response,
-                  resines,
-                  row.key,
-                  item.value,
-                  machine
-                )
-              }
-            })
-            const subtotal = {
-              field: 'total',
-              value:
-                sub.reduce((a, b) => {
-                  return +(a + +b.value).toFixed(2)
-                }, 0) || 0
+          const subData = () => {
+            if (filter === 'machine') {
+              return filterMachines(
+                machines,
+                fields,
+                response,
+                resines,
+                row.key
+              )
             }
-            return { row: machine, data: [...sub, subtotal] }
-          })
+            if (filter === 'molde') {
+              return
+            }
+            if (filter === 'model') {
+              return
+            }
+          }
 
           const downtimeSub = issues.map((issue) => {
             const sub = fields.map((item) => {
@@ -2378,20 +2390,9 @@ const graphqlResolver = {
             }
           }
         })
-
-        // rowsFields.map((it) => {
-        //   console.log(it.row)
-        //   it.second.map((sub) => {
-        //     console.log(sub)
-        //   })
-        // })
-
         return rowsFields
       })
-
     return data
-
-    // return { hola: 'hola' }
   }
 }
 
