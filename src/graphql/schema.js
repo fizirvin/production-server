@@ -20,7 +20,7 @@ module.exports = buildSchema(`
         deleteReport: Hola
 
         cycles(shot: ID): [Cycles]
-        production: Hola
+        production: [ProductionData]
 
         updateMachines: Hola
         updateMoldes: Hola
@@ -47,6 +47,24 @@ module.exports = buildSchema(`
 
     type Extracted{
         total: Int
+    }
+
+    type ProductionData{
+        row: String
+        data: [Data]
+        subData: [SubData]
+        second: [SubData]
+    }
+
+    type Data{
+        date: String
+        field: String
+        value: Decimal
+    }
+
+    type SubData{
+        row: String
+        data: [Data]
     }
 
     type Molde {

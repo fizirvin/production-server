@@ -8,7 +8,8 @@ const downtimeSchema = new Schema(
     },
     issue: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Issue'
     },
     mins: {
       type: Number,

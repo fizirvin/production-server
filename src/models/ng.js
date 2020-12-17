@@ -8,7 +8,8 @@ const resineSchema = new Schema(
     },
     defect: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Defect'
     },
     model: {
       type: Schema.Types.ObjectId,

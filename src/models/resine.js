@@ -8,7 +8,8 @@ const resineSchema = new Schema(
     },
     resine: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Material'
     },
     purge: {
       type: Number,

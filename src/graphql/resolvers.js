@@ -3,6 +3,15 @@ import fullDate from '../functions/fullDate'
 import allDate from '../functions/allDate'
 import stringDate from '../functions/stringDate'
 import setFields from '../functions/setFields'
+import keyValue from '../functions/keyValue'
+import keyValueMachine from '../functions/keyValueMachine'
+import keyValueDowntime from '../functions/keyValueDowntime'
+import keyValueResine from '../functions/keyValueResine'
+import keyValueDefect from '../functions/keyValueDefect'
+import machineList from '../functions/machineList'
+import downtimeList from '../functions/downtimeList'
+import resinesList from '../functions/resinesList'
+import defectList from '../functions/defectList'
 
 import Molde from '../models/molde'
 import Machine from '../models/machine'
@@ -1936,51 +1945,453 @@ const graphqlResolver = {
 
     const fields = setFields(period, today, filter)
 
-    const items = fields.map(async (item) => {
-      const data = await Production.aggregate([
-        { $match: { date: item.value, shift: '1' } },
-        {
-          $group: {
-            _id: { date: '$date' },
-            real: { $sum: '$real' },
-            ng: { $sum: '$ng' },
-            ok: { $sum: '$ok' },
-            plan: { $sum: '$plan' },
-            cycles: { $sum: '$cycles' },
-            wtime: { $sum: '$wtime' },
-            dtime: { $sum: '$dtime' }
+    const formatFields = fields.map((item) => item.value)
+
+    const data = await Production.find(
+      {
+        date: { $in: formatFields },
+        shift: { $in: ['1', '2'] }
+      },
+      {
+        _id: 0,
+        shift: 0,
+        dates: 0,
+        program: 0,
+        prod: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0
+      }
+    )
+      .populate({
+        path: 'report',
+        model: 'Report',
+        select: {
+          _id: 0,
+          dates: 0,
+          date: 0,
+          shift: 0,
+          real: 0,
+          real: 0,
+          ng: 0,
+          ok: 0,
+          plan: 0,
+          tprod: 0,
+          cycles: 0,
+          ptime: 0,
+          wtime: 0,
+          dtime: 0,
+          avail: 0,
+          perf: 0,
+          qual: 0,
+          oee: 0,
+          purge: 0,
+          comments: 0,
+          team: 0,
+          oper: 0,
+          insp: 0,
+          user: 0,
+          progrs: 0,
+          createdAt: 0,
+          updatedAt: 0
+        },
+        populate: {
+          path: 'machine',
+          model: Machine,
+          select: {
+            _id: 0,
+            serial: 0,
+            closingForce: 0,
+            spindleDiameter: 0,
+            user: 0,
+            createdAt: 0,
+            updatedAt: 0
           }
         }
-      ]).then((response) => {
-        return (
-          response.length && {
-            ...response[0],
-            date: item.value,
-            wtime: +response[0].wtime,
-            dtime: +response[0].dtime
+      })
+      .then(async (response) => {
+        const resines = await Resine.find(
+          {
+            date: { $in: formatFields },
+            shift: { $in: ['1', '2'] }
+          },
+          {
+            _id: 0,
+            dates: 0,
+            shift: 0
           }
         )
+          .populate({
+            path: 'report',
+            model: 'Report',
+            select: {
+              _id: 0,
+              dates: 0,
+              date: 0,
+              shift: 0,
+              real: 0,
+              real: 0,
+              ng: 0,
+              ok: 0,
+              plan: 0,
+              tprod: 0,
+              cycles: 0,
+              ptime: 0,
+              wtime: 0,
+              dtime: 0,
+              avail: 0,
+              perf: 0,
+              qual: 0,
+              oee: 0,
+              purge: 0,
+              comments: 0,
+              team: 0,
+              oper: 0,
+              insp: 0,
+              user: 0,
+              progrs: 0,
+              createdAt: 0,
+              updatedAt: 0
+            },
+            populate: {
+              path: 'machine',
+              model: Machine,
+              select: {
+                _id: 0,
+                serial: 0,
+                closingForce: 0,
+                spindleDiameter: 0,
+                user: 0,
+                createdAt: 0,
+                updatedAt: 0
+              }
+            }
+          })
+          .populate({
+            path: 'resine',
+            model: 'Material',
+            select: {
+              number: 0,
+              manufacturer: 0,
+              description: 0,
+              identification: 0,
+              type: 0,
+              unit: 0,
+              user: 0,
+              createdAt: 0,
+              updatedAt: 0
+            }
+          })
+
+        const downtimes = await Downtime.find(
+          {
+            date: { $in: formatFields },
+            shift: { $in: ['1', '2'] }
+          },
+          {
+            _id: 0,
+            dates: 0,
+            shift: 0
+          }
+        )
+          .populate({
+            path: 'report',
+            model: 'Report',
+            select: {
+              _id: 0,
+              dates: 0,
+              date: 0,
+              shift: 0,
+              real: 0,
+              real: 0,
+              ng: 0,
+              ok: 0,
+              plan: 0,
+              tprod: 0,
+              cycles: 0,
+              ptime: 0,
+              wtime: 0,
+              dtime: 0,
+              avail: 0,
+              perf: 0,
+              qual: 0,
+              oee: 0,
+              purge: 0,
+              comments: 0,
+              team: 0,
+              oper: 0,
+              insp: 0,
+              user: 0,
+              progrs: 0,
+              createdAt: 0,
+              updatedAt: 0
+            },
+            populate: {
+              path: 'machine',
+              model: Machine,
+              select: {
+                _id: 0,
+                serial: 0,
+                closingForce: 0,
+                spindleDiameter: 0,
+                user: 0,
+                createdAt: 0,
+                updatedAt: 0
+              }
+            }
+          })
+          .populate({
+            path: 'issue',
+            model: 'Issue',
+            select: {
+              name: 0,
+              user: 0,
+              createdAt: 0,
+              updatedAt: 0
+            }
+          })
+
+        const ngs = await Ng.find(
+          {
+            date: { $in: formatFields },
+            shift: { $in: ['1', '2'] }
+          },
+          {
+            _id: 0,
+            dates: 0,
+            shift: 0
+          }
+        )
+          .populate({
+            path: 'report',
+            model: 'Report',
+            select: {
+              _id: 0,
+              dates: 0,
+              date: 0,
+              shift: 0,
+              real: 0,
+              real: 0,
+              ng: 0,
+              ok: 0,
+              plan: 0,
+              tprod: 0,
+              cycles: 0,
+              ptime: 0,
+              wtime: 0,
+              dtime: 0,
+              avail: 0,
+              perf: 0,
+              qual: 0,
+              oee: 0,
+              purge: 0,
+              comments: 0,
+              team: 0,
+              oper: 0,
+              insp: 0,
+              user: 0,
+              progrs: 0,
+              createdAt: 0,
+              updatedAt: 0
+            },
+            populate: {
+              path: 'machine',
+              model: Machine,
+              select: {
+                _id: 0,
+                serial: 0,
+                closingForce: 0,
+                spindleDiameter: 0,
+                user: 0,
+                createdAt: 0,
+                updatedAt: 0
+              }
+            }
+          })
+          .populate({
+            path: 'defect',
+            model: 'Defect',
+            select: {
+              name: 0,
+              injection: 0,
+              user: 0,
+              createdAt: 0,
+              updatedAt: 0
+            }
+          })
+
+        const rows = [
+          { row: 'Total Real', key: 'real' },
+          { row: 'Total NG', key: 'ng' },
+          { row: 'Total OK', key: 'ok' },
+          { row: 'Total Plan', key: 'plan' },
+          { row: 'Total Cycles', key: 'cycles' },
+          { row: 'Total Worktime', key: 'wtime' },
+          { row: 'Total Downtime', key: 'dtime' },
+          { row: 'Total OEE', key: 'oee' },
+          { row: 'Total Purge', key: 'purge' }
+        ]
+
+        const machines = machineList(response)
+        const issues = downtimeList(downtimes)
+        const materials = resinesList(resines)
+        const defects = defectList(ngs)
+
+        const rowsFields = rows.map((row) => {
+          const data = fields.map((item) => {
+            return {
+              date: item.value,
+              field: item.field,
+              value: keyValue(response, resines, row.key, item.value)
+            }
+          })
+          const total = {
+            field: 'total',
+            value:
+              data.reduce((a, b) => {
+                return +(a + +b.value).toFixed(2)
+              }, 0) || 0
+          }
+
+          const subData = machines.map((machine) => {
+            const sub = fields.map((item) => {
+              return {
+                date: item.value,
+                field: item.field,
+                value: keyValueMachine(
+                  response,
+                  resines,
+                  row.key,
+                  item.value,
+                  machine
+                )
+              }
+            })
+            const subtotal = {
+              field: 'total',
+              value:
+                sub.reduce((a, b) => {
+                  return +(a + +b.value).toFixed(2)
+                }, 0) || 0
+            }
+            return { row: machine, data: [...sub, subtotal] }
+          })
+
+          const downtimeSub = issues.map((issue) => {
+            const sub = fields.map((item) => {
+              return {
+                date: item.value,
+                field: item.field,
+                value: keyValueDowntime(downtimes, item.value, issue._id)
+              }
+            })
+            const subtotal = {
+              field: 'total',
+              value:
+                sub.reduce((a, b) => {
+                  return +(a + +b.value).toFixed(2)
+                }, 0) || 0
+            }
+            return { row: issue.code, data: [...sub, subtotal] }
+          })
+
+          const resinesSub = materials.map((material) => {
+            const sub = fields.map((item) => {
+              return {
+                date: item.value,
+                field: item.field,
+                value: keyValueResine(resines, item.value, material._id)
+              }
+            })
+            const subtotal = {
+              field: 'total',
+              value:
+                sub.reduce((a, b) => {
+                  return +(a + +b.value).toFixed(2)
+                }, 0) || 0
+            }
+            return {
+              row: `${material.acronym} ${material.color}`,
+              data: [...sub, subtotal]
+            }
+          })
+
+          const ngsSub = defects.map((defect) => {
+            const sub = fields.map((item) => {
+              return {
+                date: item.value,
+                field: item.field,
+                value: keyValueDefect(ngs, item.value, defect._id)
+              }
+            })
+            const subtotal = {
+              field: 'total',
+              value:
+                sub.reduce((a, b) => {
+                  return +(a + +b.value).toFixed(2)
+                }, 0) || 0
+            }
+            return {
+              row: defect.code,
+              data: [...sub, subtotal]
+            }
+          })
+
+          if (
+            row.key === 'real' ||
+            row.key === 'ok' ||
+            row.key === 'plan' ||
+            row.key === 'wtime' ||
+            row.key === 'oee' ||
+            row.key === 'cycles'
+          ) {
+            return {
+              row: row.row,
+              data: [...data, total],
+              subData: subData,
+              second: []
+            }
+          }
+
+          if (row.key === 'ng') {
+            return {
+              row: row.row,
+              data: [...data, total],
+              subData: subData,
+              second: ngsSub
+            }
+          }
+          if (row.key === 'dtime') {
+            return {
+              row: row.row,
+              data: [...data, total],
+              subData: subData,
+              second: downtimeSub
+            }
+          }
+          if (row.key === 'purge') {
+            return {
+              row: row.row,
+              data: [...data, total],
+              subData: subData,
+              second: resinesSub
+            }
+          }
+        })
+
+        // rowsFields.map((it) => {
+        //   console.log(it.row)
+        //   it.second.map((sub) => {
+        //     console.log(sub)
+        //   })
+        // })
+
+        return rowsFields
       })
-      console.log(data)
-      return await data
 
-      // const { createdAt, updatedAt, tcycles, lifecycles, user } = item._doc
-      // const totalCycles = tcycles + cycles
-      // const percent = ((totalCycles / lifecycles) * 100).toFixed(2)
+    return data
 
-      // const object = {
-      //   ...item._doc,
-      //   createdAt: fullDate(createdAt),
-      //   updatedAt: fullDate(updatedAt),
-      //   tcycles: totalCycles,
-      //   percent,
-      //   user: user.name
-      // }
-
-      // return object
-    })
-
-    return { hola: 'hola' }
+    // return { hola: 'hola' }
   }
 }
 
