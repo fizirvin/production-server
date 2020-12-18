@@ -5,17 +5,24 @@ import allDate from '../functions/allDate'
 import stringDate from '../functions/stringDate'
 import setFields from '../functions/setFields'
 import keyValue from '../functions/keyValue'
-import keyValueMachine from '../functions/keyValueMachine'
 import keyValueDowntime from '../functions/keyValueDowntime'
 import keyValueResine from '../functions/keyValueResine'
 import keyValueDefect from '../functions/keyValueDefect'
 import machineList from '../functions/machineList'
-
-import filterMachines from '../functions/filterMachines'
-
+import moldesList from '../functions/moldesList'
+import modelsList from '../functions/modelsList'
 import downtimeList from '../functions/downtimeList'
 import resinesList from '../functions/resinesList'
 import defectList from '../functions/defectList'
+
+import filterMachines from '../functions/filterMachines'
+import filterMoldes from '../functions/filterMoldes'
+import filterModels from '../functions/filterModels'
+import filterNgsMachinesSub from '../functions/filterNgsMachinesSub'
+import filterNgsMoldesSub from '../functions/filterNgsMoldesSub'
+import filterNgsModelsSub from '../functions/filterNgsModelsSub'
+import filterDowntimesSub from '../functions/filterDowntimesSub'
+import filterResinesSub from '../functions/filterResinesSub'
 
 import Molde from '../models/molde'
 import Machine from '../models/machine'
@@ -1942,19 +1949,15 @@ const graphqlResolver = {
       user: updatedReport._doc.user.name
     }
   },
-  production: async function ({ today, filter, period, shifts }) {
+  production: async function ({
+    today,
+    filter = 'machine',
+    period = 'day',
+    shifts = ['1', '2']
+  }) {
     if (!today) {
-      const day = new Date()
+      const day = new Date('2020-12-10')
       today = stringDate(day)
-    }
-    if (!filter) {
-      filter = 'machine'
-    }
-    if (!period) {
-      period = 'day'
-    }
-    if (!shifts) {
-      shifts = ['1', '2']
     }
     if (shifts === '1') {
       shifts = ['1']
@@ -1966,12 +1969,16 @@ const graphqlResolver = {
       shifts = ['1', '2']
     }
 
-    const fields = setFields(period, today, filter)
-    const formatFields = fields.map((item) => item.value)
+    const fields = setFields(period, today)
+    const maxMinFields = () => {
+      if (period === 'day') {
+        return { min: fields[0].min, max: fields[6].max }
+      }
+    }
 
     const data = await Production.find(
       {
-        date: { $in: formatFields },
+        date: { $gte: maxMinFields().min, $lte: maxMinFields().max },
         shift: { $in: shifts }
       },
       {
@@ -2045,10 +2052,21 @@ const graphqlResolver = {
           updatedAt: 0
         }
       })
+      .populate({
+        path: 'model',
+        Model: 'Model',
+        select: {
+          number: 0,
+          family: 0,
+          user: 0,
+          createdAt: 0,
+          updatedAt: 0
+        }
+      })
       .then(async (response) => {
         const resines = await Resine.find(
           {
-            date: { $in: formatFields },
+            date: { $gte: maxMinFields().min, $lte: maxMinFields().max },
             shift: { $in: shifts }
           },
           {
@@ -2119,7 +2137,7 @@ const graphqlResolver = {
 
         const downtimes = await Downtime.find(
           {
-            date: { $in: formatFields },
+            date: { $gte: maxMinFields().min, $lte: maxMinFields().max },
             shift: { $in: shifts }
           },
           {
@@ -2185,7 +2203,7 @@ const graphqlResolver = {
 
         const ngs = await Ng.find(
           {
-            date: { $in: formatFields },
+            date: { $gte: maxMinFields().min, $lte: maxMinFields().max },
             shift: { $in: shifts }
           },
           {
@@ -2250,17 +2268,19 @@ const graphqlResolver = {
             }
           })
 
-        const machines = machineList(response)
         const issues = downtimeList(downtimes)
         const materials = resinesList(resines)
         const defects = defectList(ngs)
+        const machines = machineList(response)
+        const models = modelsList(response)
+        const moldes = moldesList(response)
 
         const rowsFields = rows.map((row) => {
           const data = fields.map((item) => {
             return {
               date: item.value,
               field: item.field,
-              value: keyValue(response, resines, row.key, item.value)
+              value: keyValue(response, resines, row.key, item.min, item.max)
             }
           })
           const total = {
@@ -2282,10 +2302,10 @@ const graphqlResolver = {
               )
             }
             if (filter === 'molde') {
-              return
+              return filterMoldes(moldes, fields, response, row.key)
             }
             if (filter === 'model') {
-              return
+              return filterModels(models, fields, response, row.key)
             }
           }
 
@@ -2294,7 +2314,12 @@ const graphqlResolver = {
               return {
                 date: item.value,
                 field: item.field,
-                value: keyValueDowntime(downtimes, item.value, issue._id)
+                value: keyValueDowntime(
+                  downtimes,
+                  issue._id,
+                  item.min,
+                  item.max
+                )
               }
             })
             const subtotal = {
@@ -2304,7 +2329,26 @@ const graphqlResolver = {
                   return +(a + +b.value).toFixed(2)
                 }, 0) || 0
             }
-            return { row: issue.code, data: [...sub, subtotal] }
+            const subSecond = () => {
+              if (filter === 'machine') {
+                const machines = machineList(response)
+                return filterDowntimesSub(
+                  machines,
+                  fields,
+                  downtimes,
+                  issue._id
+                )
+              }
+              if (filter === 'molde' || filter === 'model') {
+                return []
+              }
+            }
+
+            return {
+              row: issue.code,
+              data: [...sub, subtotal],
+              second: subSecond
+            }
           })
 
           const resinesSub = materials.map((material) => {
@@ -2312,7 +2356,7 @@ const graphqlResolver = {
               return {
                 date: item.value,
                 field: item.field,
-                value: keyValueResine(resines, item.value, material._id)
+                value: keyValueResine(resines, material._id, item.min, item.max)
               }
             })
             const subtotal = {
@@ -2322,9 +2366,20 @@ const graphqlResolver = {
                   return +(a + +b.value).toFixed(2)
                 }, 0) || 0
             }
+
+            const subSecond = () => {
+              if (filter === 'machine') {
+                return filterResinesSub(machines, fields, resines, material._id)
+              }
+              if (filter === 'molde' || filter === 'model') {
+                return []
+              }
+            }
+
             return {
               row: `${material.acronym} ${material.color}`,
-              data: [...sub, subtotal]
+              data: [...sub, subtotal],
+              second: subSecond
             }
           })
 
@@ -2333,7 +2388,7 @@ const graphqlResolver = {
               return {
                 date: item.value,
                 field: item.field,
-                value: keyValueDefect(ngs, item.value, defect._id)
+                value: keyValueDefect(ngs, defect._id, item.min, item.max)
               }
             })
             const subtotal = {
@@ -2343,9 +2398,22 @@ const graphqlResolver = {
                   return +(a + +b.value).toFixed(2)
                 }, 0) || 0
             }
+
+            const subSecond = () => {
+              if (filter === 'machine') {
+                return filterNgsMachinesSub(machines, fields, ngs, defect._id)
+              }
+              if (filter === 'molde') {
+                return filterNgsMoldesSub(moldes, fields, ngs, defect._id)
+              }
+              if (filter === 'model') {
+                return filterNgsModelsSub(models, fields, ngs, defect._id)
+              }
+            }
             return {
               row: defect.code,
-              data: [...sub, subtotal]
+              data: [...sub, subtotal],
+              second: subSecond
             }
           })
 

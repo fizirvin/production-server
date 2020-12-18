@@ -1,24 +1,17 @@
-import keyValueMachine from './keyValueMachine'
+import keyValueResineSub from './keyValueResineSub'
 
-export default function filterMachines(
-  machines,
-  fields,
-  response,
-  resines,
-  rowKey
-) {
+export default function filterResinesSub(machines, fields, resines, material) {
   const data = machines.map((machine) => {
     const sub = fields.map((item) => {
       return {
         date: item.value,
         field: item.field,
-        value: keyValueMachine(
-          response,
+        value: keyValueResineSub(
           resines,
-          rowKey,
-          machine._id,
+          material,
           item.min,
-          item.max
+          item.max,
+          machine._id
         )
       }
     })
@@ -31,5 +24,10 @@ export default function filterMachines(
     }
     return { row: machine.number, data: [...sub, subtotal] }
   })
-  return data
+  return data.filter(
+    (item) =>
+      item.data.reduce((a, b) => {
+        return +(a + +b.value).toFixed(2)
+      }, 0) !== 0
+  )
 }

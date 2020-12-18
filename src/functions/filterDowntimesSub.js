@@ -1,24 +1,17 @@
-import keyValueMachine from './keyValueMachine'
+import keyValueDowntimeSub from './keyValueDowntimeSub'
 
-export default function filterMachines(
-  machines,
-  fields,
-  response,
-  resines,
-  rowKey
-) {
+export default function filterDowntimesSub(machines, fields, downtimes, issue) {
   const data = machines.map((machine) => {
     const sub = fields.map((item) => {
       return {
         date: item.value,
         field: item.field,
-        value: keyValueMachine(
-          response,
-          resines,
-          rowKey,
-          machine._id,
+        value: keyValueDowntimeSub(
+          downtimes,
+          issue,
           item.min,
-          item.max
+          item.max,
+          machine._id
         )
       }
     })
@@ -31,5 +24,10 @@ export default function filterMachines(
     }
     return { row: machine.number, data: [...sub, subtotal] }
   })
-  return data
+  return data.filter(
+    (item) =>
+      item.data.reduce((a, b) => {
+        return +(a + +b.value).toFixed(2)
+      }, 0) !== 0
+  )
 }

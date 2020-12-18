@@ -4,7 +4,8 @@ const downtimeSchema = new Schema(
   {
     report: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Report'
     },
     issue: {
       type: Schema.Types.ObjectId,

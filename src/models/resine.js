@@ -4,7 +4,8 @@ const resineSchema = new Schema(
   {
     report: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Report'
     },
     resine: {
       type: Schema.Types.ObjectId,

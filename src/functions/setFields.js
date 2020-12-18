@@ -1,6 +1,6 @@
 import weekDate from './weekDate'
 
-export default function setFields(period, today, filter) {
+export default function setFields(period, today) {
   if (period === 'day') {
     const monday = weekDate(1, today)
     const tuesday = weekDate(2, today)
@@ -12,13 +12,13 @@ export default function setFields(period, today, filter) {
 
     const fields = [
       // { field: 'Production by', value: filter.toUpperCase() },
-      { field: 'Mon', value: monday },
-      { field: 'Tue', value: tuesday },
-      { field: 'Wed', value: wednesday },
-      { field: 'Thu', value: thursday },
-      { field: 'Fri', value: friday },
-      { field: 'Sat', value: saturday },
-      { field: 'Sun', value: sunday }
+      { field: 'Mon', value: monday, max: monday, min: monday },
+      { field: 'Tue', value: tuesday, max: tuesday, min: tuesday },
+      { field: 'Wed', value: wednesday, max: wednesday, min: wednesday },
+      { field: 'Thu', value: thursday, max: thursday, min: thursday },
+      { field: 'Fri', value: friday, max: thursday, min: thursday },
+      { field: 'Sat', value: saturday, max: thursday, min: thursday },
+      { field: 'Sun', value: sunday, max: sunday, min: sunday }
       // { field: 'Total', value: 'Week' }
     ]
     return fields

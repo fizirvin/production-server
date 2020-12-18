@@ -17,11 +17,13 @@ const productionSchema = new Schema(
     },
     molde: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Molde'
     },
     model: {
       type: Schema.Types.ObjectId,
-      required: true
+      required: true,
+      ref: 'Model'
     },
     real: {
       type: Number,

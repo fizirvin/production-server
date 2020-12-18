@@ -1,24 +1,17 @@
-import keyValueMachine from './keyValueMachine'
+import keyValueNgMachineSub from './keyValueNgMachineSub'
 
-export default function filterMachines(
-  machines,
-  fields,
-  response,
-  resines,
-  rowKey
-) {
+export default function filterNgsMachinesSub(machines, fields, ngs, defect) {
   const data = machines.map((machine) => {
     const sub = fields.map((item) => {
       return {
         date: item.value,
         field: item.field,
-        value: keyValueMachine(
-          response,
-          resines,
-          rowKey,
-          machine._id,
+        value: keyValueNgMachineSub(
+          ngs,
+          defect,
           item.min,
-          item.max
+          item.max,
+          machine._id
         )
       }
     })
@@ -31,5 +24,10 @@ export default function filterMachines(
     }
     return { row: machine.number, data: [...sub, subtotal] }
   })
-  return data
+  return data.filter(
+    (item) =>
+      item.data.reduce((a, b) => {
+        return +(a + +b.value).toFixed(2)
+      }, 0) !== 0
+  )
 }

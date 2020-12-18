@@ -53,7 +53,7 @@ module.exports = buildSchema(`
         row: String
         data: [Data]
         subData: [SubData]
-        second: [SubData]
+        second: [Second]
     }
 
     type Data{
@@ -65,6 +65,12 @@ module.exports = buildSchema(`
     type SubData{
         row: String
         data: [Data]
+    }
+
+    type Second{
+        row: String
+        data: [Data]
+        second: [SubData]
     }
 
     type Molde {
