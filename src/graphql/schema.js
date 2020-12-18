@@ -20,7 +20,7 @@ module.exports = buildSchema(`
         deleteReport: Hola
 
         cycles(shot: ID): [Cycles]
-        production: [ProductionData]
+        production(today: String, filter: String, period: String, shifts: String): [ProductionData]
 
         updateMachines: Hola
         updateMoldes: Hola
