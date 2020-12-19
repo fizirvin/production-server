@@ -53,9 +53,9 @@ import PShot from '../models/pshot'
 import PUser from '../models/puser'
 import PProfile from '../models/pprofile'
 
-const safeResines = true
+const safeResines = false
 const safeDowntimes = false
-const safeNgs = true
+const safeNgs = false
 const safeProductions = false
 const safeReports = false
 
@@ -94,13 +94,14 @@ const graphqlResolver = {
     const past = await PMolde.find()
 
     past.map(async (item) => {
+      const totalCyc = item.tcycles || 0
       const newItem = new Molde({
         _id: item._id,
         number: item.moldeNumber,
         serial: item.moldeSerial,
         cavities: item.cavities,
         lifecycles: item.lifecycles,
-        tcycles: item.tcycles,
+        tcycles: totalCyc,
         shot: item.shot,
         quantity: item.quantity,
         active: item.active,
@@ -2460,7 +2461,12 @@ const graphqlResolver = {
         })
         return rowsFields
       })
-    return data
+
+    const formatFields = fields.map((field) => {
+      return { field: field.field, value: field.value }
+    })
+
+    return { fields: formatFields, rows: data }
   }
 }
 

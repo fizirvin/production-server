@@ -20,7 +20,7 @@ module.exports = buildSchema(`
         deleteReport: Hola
 
         cycles(shot: ID): [Cycles]
-        production(today: String, filter: String, period: String, shifts: String): [ProductionData]
+        production(today: String, filter: String, period: String, shifts: String): ProductionData
 
         updateMachines: Hola
         updateMoldes: Hola
@@ -50,6 +50,16 @@ module.exports = buildSchema(`
     }
 
     type ProductionData{
+        fields: [Field]
+        rows: [RowsData]
+    }
+
+    type Field{
+        field: String
+        value: String
+    }
+
+    type RowsData{
         row: String
         data: [Data]
         subData: [SubData]

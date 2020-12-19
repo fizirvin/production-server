@@ -11,6 +11,7 @@ export default function keyValueMachine(
     key === 'ng' ||
     key === 'ok' ||
     key === 'plan' ||
+    key === 'cycles' ||
     key === 'wtime' ||
     key === 'dtime'
   ) {
@@ -54,7 +55,7 @@ export default function keyValueMachine(
           (filt) =>
             filt.date >= min &&
             filt.date <= max &&
-            filt.report.machine._id === machine
+            filt.report.machine._id.toString() === machine.toString()
         )
         .reduce((a, b) => {
           return +(a + +b.purge).toFixed(2)

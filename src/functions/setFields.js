@@ -16,8 +16,8 @@ export default function setFields(period, today) {
       { field: 'Tue', value: tuesday, max: tuesday, min: tuesday },
       { field: 'Wed', value: wednesday, max: wednesday, min: wednesday },
       { field: 'Thu', value: thursday, max: thursday, min: thursday },
-      { field: 'Fri', value: friday, max: thursday, min: thursday },
-      { field: 'Sat', value: saturday, max: thursday, min: thursday },
+      { field: 'Fri', value: friday, max: friday, min: friday },
+      { field: 'Sat', value: saturday, max: saturday, min: saturday },
       { field: 'Sun', value: sunday, max: sunday, min: sunday }
       // { field: 'Total', value: 'Week' }
     ]

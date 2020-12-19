@@ -4,6 +4,7 @@ export default function keyValue(response, resines, key, min, max) {
     key === 'ng' ||
     key === 'ok' ||
     key === 'plan' ||
+    key == 'cycles' ||
     key === 'wtime' ||
     key === 'dtime'
   ) {
