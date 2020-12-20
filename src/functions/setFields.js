@@ -106,14 +106,14 @@ export default function setFields(period, today) {
   if (period === 'month') {
     const currentMonth = monthFields(0, today)
     const oneMonthAgo = monthFields(1, today)
-    const twoMonthsAgo = monthFields(2, today)
+    // const twoMonthsAgo = monthFields(2, today)
     const fields = [
-      {
-        field: monthNumber(twoMonthsAgo.max),
-        value: twoMonthsAgo.month,
-        max: twoMonthsAgo.max,
-        min: twoMonthsAgo.min
-      },
+      // {
+      //   field: monthNumber(twoMonthsAgo.max),
+      //   value: twoMonthsAgo.month,
+      //   max: twoMonthsAgo.max,
+      //   min: twoMonthsAgo.min
+      // },
       {
         field: monthNumber(oneMonthAgo.max),
         value: oneMonthAgo.month,

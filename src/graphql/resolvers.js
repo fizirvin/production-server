@@ -1958,7 +1958,7 @@ const graphqlResolver = {
   }) {
     if (!today) {
       const day = new Date()
-      today = stringDate(day)
+      today = stringDate(day) + 'T14:00:00.000+00:00'
     }
     if (shifts === '1') {
       shifts = ['1']
@@ -1979,7 +1979,7 @@ const graphqlResolver = {
         return { min: fields[0].min, max: fields[4].max }
       }
       if (period === 'month') {
-        return { min: fields[0].min, max: fields[2].max }
+        return { min: fields[0].min, max: fields[1].max }
       }
     }
 
