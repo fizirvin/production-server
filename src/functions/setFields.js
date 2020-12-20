@@ -1,6 +1,9 @@
 import weekDate from './weekDate'
 import weekFields from './weekFields'
+import monthFields from './monthFields'
+
 import weekNumber from './weekNumber'
+import monthNumber from './monthNumber'
 
 export default function setFields(period, today) {
   if (period === 'day') {
@@ -68,34 +71,60 @@ export default function setFields(period, today) {
       //   min: fiveWeeksAgo.min
       // },
       {
-        field: 'Week1',
+        field: `${fourWeeksAgo.min} - ${fourWeeksAgo.max}`,
         value: weekNumber(fourWeeksAgo.min),
         max: fourWeeksAgo.max,
         min: fourWeeksAgo.min
       },
       {
-        field: 'Week2',
+        field: `${threeWeeksAgo.min} - ${threeWeeksAgo.max}`,
         value: weekNumber(threeWeeksAgo.min),
         max: threeWeeksAgo.max,
         min: threeWeeksAgo.min
       },
       {
-        field: 'Week3',
+        field: `${twoWeeksAgo.min} - ${twoWeeksAgo.max}`,
         value: weekNumber(twoWeeksAgo.min),
         max: twoWeeksAgo.max,
         min: twoWeeksAgo.min
       },
       {
-        field: 'Week4',
+        field: `${oneWeekAgo.min} - ${oneWeekAgo.max}`,
         value: weekNumber(oneWeekAgo.min),
         max: oneWeekAgo.max,
         min: oneWeekAgo.min
       },
       {
-        field: 'Week5',
+        field: `${currentWeek.min} - ${currentWeek.max}`,
         value: weekNumber(currentWeek.min),
         max: currentWeek.max,
         min: currentWeek.min
+      }
+    ]
+    return fields
+  }
+  if (period === 'month') {
+    const currentMonth = monthFields(0, today)
+    const oneMonthAgo = monthFields(1, today)
+    const twoMonthsAgo = monthFields(2, today)
+    const fields = [
+      {
+        field: monthNumber(twoMonthsAgo.max),
+        value: twoMonthsAgo.month,
+        max: twoMonthsAgo.max,
+        min: twoMonthsAgo.min
+      },
+      {
+        field: monthNumber(oneMonthAgo.max),
+        value: oneMonthAgo.month,
+        max: oneMonthAgo.max,
+        min: oneMonthAgo.min
+      },
+      {
+        field: monthNumber(currentMonth.max),
+        value: currentMonth.month,
+        max: currentMonth.max,
+        min: currentMonth.min
       }
     ]
     return fields
