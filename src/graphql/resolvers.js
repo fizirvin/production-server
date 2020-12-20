@@ -1953,11 +1953,11 @@ const graphqlResolver = {
   production: async function ({
     today,
     filter = 'machine',
-    period = 'day',
+    period = 'week',
     shifts = ['1', '2']
   }) {
     if (!today) {
-      const day = new Date('2020-12-10')
+      const day = new Date()
       today = stringDate(day)
     }
     if (shifts === '1') {
@@ -1974,6 +1974,9 @@ const graphqlResolver = {
     const maxMinFields = () => {
       if (period === 'day') {
         return { min: fields[0].min, max: fields[6].max }
+      }
+      if (period === 'week') {
+        return { min: fields[0].min, max: fields[4].max }
       }
     }
 
