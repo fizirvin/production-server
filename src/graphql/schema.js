@@ -20,6 +20,7 @@ module.exports = buildSchema(`
         deleteReport: Hola
 
         cycles(shot: ID): [Cycles]
+        calendarcycles: [Calendar]
         production(today: String, filter: String, period: String, shifts: String): ProductionData
 
         updateMachines: Hola
@@ -39,6 +40,25 @@ module.exports = buildSchema(`
         extractProductions: Extracted
         extractReports: Extracted
         updateReportsProd: Extracted
+    }
+
+    type Calendar{
+        _id: String
+        molde: String
+        items: [CalendarProductions]
+    }
+
+    type CalendarProductions{
+        _id: String
+        date: String
+        shift: String
+        machine: String
+        real: Int
+        cycles: Int
+        quantity: Int
+        status: String
+        total: Int
+        percent: String
     }
 
     type Hola{

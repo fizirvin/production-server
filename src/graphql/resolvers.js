@@ -2473,6 +2473,143 @@ const graphqlResolver = {
     })
 
     return { fields: formatFields, rows: data }
+  },
+  calendarcycles: async function () {
+    const fdate = new Date()
+    const finalDate = stringDate(fdate)
+
+    const items = await Shot.find(
+      { active: true },
+      { comments: 0, user: 0, createdAt: 0, updatedAt: 0, active: 0 }
+    ).populate({
+      path: 'molde',
+      model: 'Molde',
+      select: {
+        serial: 0,
+        cavities: 0,
+        lifecycles: 0,
+        tcycles: 0,
+        shot: 0,
+        active: 0,
+        user: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    })
+
+    const shots = items.map(async (shot) => {
+      const { molde, date, shift } = shot._doc
+
+      const ProductionsArray = await Production.find(
+        {
+          molde: molde._id.toString(),
+          date: { $gte: date, $lte: finalDate }
+        },
+        {
+          dates: 0,
+          program: 0,
+          model: 0,
+          plan: 0,
+          prod: 0,
+          ng: 0,
+          ok: 0,
+          wtime: 0,
+          dtime: 0,
+          avail: 0,
+          perf: 0,
+          qual: 0,
+          oee: 0
+        }
+      )
+        .populate({
+          path: 'report',
+          model: 'Report',
+          select: {
+            dates: 0,
+            date: 0,
+            shift: 0,
+            real: 0,
+            real: 0,
+            ng: 0,
+            ok: 0,
+            plan: 0,
+            tprod: 0,
+            cycles: 0,
+            ptime: 0,
+            wtime: 0,
+            dtime: 0,
+            avail: 0,
+            perf: 0,
+            qual: 0,
+            oee: 0,
+            purge: 0,
+            comments: 0,
+            team: 0,
+            oper: 0,
+            insp: 0,
+            user: 0,
+            progrs: 0,
+            createdAt: 0,
+            updatedAt: 0
+          },
+          populate: [
+            {
+              path: 'machine',
+              model: 'Machine',
+              select: {
+                serial: 0,
+                closingForce: 0,
+                spindleDiameter: 0,
+                user: 0,
+                createdAt: 0,
+                updatedAt: 0
+              }
+            }
+          ]
+        })
+        .sort({ date: 1, shift: 1 })
+
+      const cycles = ProductionsArray.map((cycle) => {
+        return {
+          _id: cycle._doc._id,
+          date: cycle._doc.date,
+          shift: cycle._doc.shift,
+          machine: cycle._doc.report.machine.number,
+          real: cycle._doc.real,
+          cycles: cycle._doc.cycles,
+          quantity: molde.quantity
+        }
+      })
+      let filterItems = [...cycles]
+      if (shift === '2') {
+        const removeItem = cycles.find(
+          (item) => item.date === date && item.shift === '1'
+        )
+        if (!removeItem) {
+          filterItems = [...items]
+        } else {
+          filterItems = cycles.filter((item) => item._id !== removeItem._id)
+        }
+      }
+
+      const colorItems = filterItems.map((cyc, index) => {
+        const quantity = filterItems.slice(0, index + 1).reduce((a, b) => {
+          return a + b.real || 0
+        }, 0)
+        const status = cyc.quantity >= quantity ? 'green' : 'red'
+
+        return {
+          ...cyc,
+          status,
+          total: quantity,
+          percent: ((quantity / cyc.quantity) * 100).toFixed(0)
+        }
+      })
+
+      return { _id: molde._id, molde: molde.number, items: colorItems }
+    })
+
+    return shots
   }
 }
 
