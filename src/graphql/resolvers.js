@@ -1,3 +1,6 @@
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+
 import { rows } from '../constants/rows'
 import zoneDate from '../functions/zoneDate'
 import fullDate from '../functions/fullDate'
@@ -579,6 +582,30 @@ const graphqlResolver = {
     }
 
     return { total: totalExtracted }
+  },
+  login: async function ({ name, password }) {
+    const user = await User.findOne({ name })
+    if (!user) {
+      const error = new Error('Name is incorrect.')
+      error.code = 401
+      throw error
+    }
+
+    const isEqual = await bcrypt.compare(password, user._doc.password)
+    if (!isEqual) {
+      const error = new Error('Password is incorrect.')
+      error.code = 402
+      throw error
+    }
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        name: user.name
+      },
+      'somesupersecretsecret',
+      { expiresIn: '1h' }
+    )
+    return { token: token, userId: user._id, name: user.name }
   },
   moldes: async function ({ page, add }) {
     if (!page) {

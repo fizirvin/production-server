@@ -6,6 +6,8 @@ module.exports = buildSchema(`
     scalar Date
 
     type RootQuery {
+        login(name: String, password: String): AuthData
+
         machines(page: Int, add: Int): MachinesData!
         moldes(page: Int, add: Int): MoldesData!
         models(page: Int, add: Int): ModelsData!
@@ -40,6 +42,12 @@ module.exports = buildSchema(`
         extractProductions: Extracted
         extractReports: Extracted
         updateReportsProd: Extracted
+    }
+
+    type AuthData {
+        token: String!
+        userId: ID!
+        name: String!
     }
 
     type Calendar{
