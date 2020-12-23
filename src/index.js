@@ -26,10 +26,13 @@ app.use(
       if (err.message.startsWith('Database Error: ')) {
         return new Error('Internal server error')
       }
-
-      const code = err.code || 500
+      if (!err.originalError) {
+        return err
+      }
+      const name = err.originalError.name
+      const code = err.originalError.code
       const message = err.message || 'An error occurred.'
-      return { code, message, name: err.name }
+      return { code, message, name: name }
     }
   })
 )

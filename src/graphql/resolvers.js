@@ -64,11 +64,11 @@ const safeReports = false
 
 const graphqlResolver = {
   deleteReport: async function () {
-    await Report.deleteMany({ date: '2020-12-16' })
-    await Production.deleteMany({ date: '2020-12-16' })
-    await Resine.deleteMany({ date: '2020-12-16' })
-    await Downtime.deleteMany({ date: '2020-12-16' })
-    await Ng.deleteMany({ date: '2020-12-16' })
+    // await Report.deleteMany({ date: '2020-12-16' })
+    // await Production.deleteMany({ date: '2020-12-16' })
+    // await Resine.deleteMany({ date: '2020-12-16' })
+    // await Downtime.deleteMany({ date: '2020-12-16' })
+    // await Ng.deleteMany({ date: '2020-12-16' })
 
     return { hola: 'hola' }
   },
@@ -817,6 +817,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
+
     const perPage = 200
     const total = await Defect.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
@@ -938,6 +939,7 @@ const graphqlResolver = {
     if (!add) {
       add = 0
     }
+
     const perPage = 100
     const total = await Report.find().countDocuments()
     if (total === 0) return { total: 0, items: [] }
@@ -1512,7 +1514,15 @@ const graphqlResolver = {
       })
 
       const productionSaved = await newProduction.save()
-      return { ...productionSaved._doc }
+      return {
+        ...productionSaved._doc,
+        dtime: +productionSaved._doc.dtime,
+        wtime: +productionSaved._doc.wtime,
+        perf: +productionSaved._doc.perf,
+        avail: +productionSaved._doc.avail,
+        qual: +productionSaved._doc.qual,
+        oee: +productionSaved._doc.oee
+      }
     })
 
     const downtimes = input.downtimes.map(async (item) => {
@@ -1904,9 +1914,9 @@ const graphqlResolver = {
       })
 
     await Production.deleteMany({ report: _id })
-    await Resine.deleteMany({ date: _id })
-    await Downtime.deleteMany({ date: _id })
-    await Ng.deleteMany({ date: _id })
+    await Resine.deleteMany({ report: _id })
+    await Downtime.deleteMany({ report: _id })
+    await Ng.deleteMany({ report: _id })
 
     const production = input.production.map(async (item) => {
       const newProduction = new Production({
@@ -1918,7 +1928,15 @@ const graphqlResolver = {
       })
 
       const productionSaved = await newProduction.save()
-      return { ...productionSaved._doc }
+      return {
+        ...productionSaved._doc,
+        dtime: +productionSaved._doc.dtime,
+        wtime: +productionSaved._doc.wtime,
+        perf: +productionSaved._doc.perf,
+        avail: +productionSaved._doc.avail,
+        qual: +productionSaved._doc.qual,
+        oee: +productionSaved._doc.oee
+      }
     })
 
     const downtimes = input.downtimes.map(async (item) => {
@@ -2637,6 +2655,1036 @@ const graphqlResolver = {
     })
 
     return shots
+  },
+  deleteMaterial: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid')
+      error.code = 401
+      error.name = 'deleting material'
+      throw error
+    }
+    const resineItem = await Resine.findOne(
+      { resine: _id },
+      {
+        report: 0,
+        resine: 0,
+        purge: 0,
+        dates: 0,
+        shift: 0
+      }
+    )
+    if (resineItem) {
+      const error = new Error(
+        `There is a report with this material at ${resineItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting material'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Material.findByIdAndDelete(_id).select({
+      number: 0,
+      description: 0,
+      color: 0,
+      type: 0,
+      unit: 0,
+      acronym: 0,
+      identification: 0,
+      manufacturer: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting material'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteIssue: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting issue'
+      throw error
+    }
+    const issueItem = await Downtime.findOne(
+      { issue: _id },
+      {
+        report: 0,
+        issue: 0,
+        mins: 0,
+        dates: 0,
+        shift: 0
+      }
+    )
+    if (issueItem) {
+      const error = new Error(
+        `There is a report with this issue at ${issueItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting issue'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Issue.findByIdAndDelete(_id).select({
+      name: 0,
+      code: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting issue'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteDefect: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting defect'
+      throw error
+    }
+    const defectItem = await Ng.findOne(
+      { defect: _id },
+      {
+        report: 0,
+        defect: 0,
+        model: 0,
+        molde: 0,
+        pieces: 0,
+        dates: 0,
+        shift: 0
+      }
+    )
+    if (defectItem) {
+      const error = new Error(
+        `There is a report with this defect at ${defectItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting defect'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Defect.findByIdAndDelete(_id).select({
+      name: 0,
+      code: 0,
+      injection: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting defect'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteProfile: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting profile'
+      throw error
+    }
+    const profileItem = await Report.findOne(
+      {
+        $or: [
+          {
+            insp: _id
+          },
+          {
+            oper: _id
+          }
+        ]
+      },
+      {
+        dates: 0,
+        machine: 0,
+        shift: 0,
+        real: 0,
+        ng: 0,
+        ok: 0,
+        plan: 0,
+        tprod: 0,
+        cycles: 0,
+        ptime: 0,
+        wtime: 0,
+        dtime: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0,
+        oee: 0,
+        purge: 0,
+        comments: 0,
+        team: 0,
+        oper: 0,
+        insp: 0,
+        user: 0,
+        progrs: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    )
+    if (profileItem) {
+      const error = new Error(
+        `There is a report with this Employee at ${profileItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting profile'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Profile.findByIdAndDelete(_id).select({
+      number: 0,
+      lastname: 0,
+      entry: 0,
+      team: 0,
+      gender: 0,
+      department: 0,
+      area: 0,
+      position: 0,
+      active: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting Profile'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteUser: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const reportItem = await Report.findOne(
+      {
+        user: _id
+      },
+      {
+        dates: 0,
+        machine: 0,
+        shift: 0,
+        real: 0,
+        ng: 0,
+        ok: 0,
+        plan: 0,
+        tprod: 0,
+        cycles: 0,
+        ptime: 0,
+        wtime: 0,
+        dtime: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0,
+        oee: 0,
+        purge: 0,
+        comments: 0,
+        team: 0,
+        oper: 0,
+        insp: 0,
+        user: 0,
+        progrs: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    )
+    if (reportItem) {
+      const error = new Error(
+        `There is a report with this user at ${reportItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const moldeItem = await Molde.findOne({
+      user: _id
+    })
+    if (moldeItem) {
+      const error = new Error(`There is a molde with this user`)
+      error.code = 401
+      error.name = 'deleting User'
+      throw error
+    }
+    const modelItem = await Model.findOne({
+      user: _id
+    })
+    if (modelItem) {
+      const error = new Error(`There is a model with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const machineItem = await Machine.findOne({
+      user: _id
+    })
+    if (machineItem) {
+      const error = new Error(`There is a machine with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const issueItem = await Issue.findOne({
+      user: _id
+    })
+    if (issueItem) {
+      const error = new Error(`There is a issue with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const defectItem = await Defect.findOne({
+      user: _id
+    })
+    if (defectItem) {
+      const error = new Error(`There is a defect with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const programItem = await Program.findOne({
+      user: _id
+    })
+    if (programItem) {
+      const error = new Error(`There is a program with this user`)
+      error.code = 401
+      error.name = 'deleting use'
+      throw error
+    }
+    const profileItem = await Profile.findOne({
+      user: _id
+    })
+    if (profileItem) {
+      const error = new Error(`There is a profile with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const materialItem = await Material.findOne({
+      user: _id
+    })
+    if (materialItem) {
+      const error = new Error(`There is a material with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const shotlItem = await Shot.findOne({
+      user: _id
+    })
+    if (shotlItem) {
+      const error = new Error(`There is a shot with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+      throw error
+    }
+    const userlItem = await User.findOne({
+      user: _id
+    })
+    if (userlItem) {
+      const error = new Error(`There is a user with this user`)
+      error.code = 401
+      error.name = 'deleting user'
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+    if (userId._id === _id) {
+      const error = new Error('delete yourself is not allowed')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await User.findByIdAndDelete(_id).select({
+      number: 0,
+      level: 0,
+      password: 0,
+      active: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting user'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteProgram: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting program'
+      throw error
+    }
+    const productionItem = await Production.findOne(
+      {
+        program: _id
+      },
+      {
+        dates: 0,
+        shift: 0,
+        real: 0,
+        ng: 0,
+        ok: 0,
+        plan: 0,
+        prod: 0,
+        cycles: 0,
+        ptime: 0,
+        wtime: 0,
+        dtime: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0,
+        oee: 0,
+        report: 0,
+        molde: 0,
+        model: 0,
+        program: 0
+      }
+    )
+    if (productionItem) {
+      const error = new Error(
+        `There is a report with this program at ${productionItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting program'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Program.findByIdAndDelete(_id).select({
+      machine: 0,
+      molde: 0,
+      model: 0,
+      time: 0,
+      cycles: 0,
+      capacity: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting program'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteMolde: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting molde'
+      throw error
+    }
+    const productionItem = await Production.findOne(
+      {
+        molde: _id
+      },
+      {
+        dates: 0,
+        shift: 0,
+        real: 0,
+        ng: 0,
+        ok: 0,
+        plan: 0,
+        prod: 0,
+        cycles: 0,
+        ptime: 0,
+        wtime: 0,
+        dtime: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0,
+        oee: 0,
+        report: 0,
+        molde: 0,
+        model: 0,
+        program: 0
+      }
+    )
+    if (productionItem) {
+      const error = new Error(
+        `There is a report with this molde at ${productionItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting molde'
+      throw error
+    }
+    const ngItem = await Ng.findOne(
+      {
+        molde: _id
+      },
+      {
+        dates: 0,
+        shift: 0,
+        report: 0,
+        defect: 0,
+        model: 0,
+        molde: 0,
+        pieces: 0
+      }
+    )
+    if (ngItem) {
+      const error = new Error(
+        `There is a defect report with this molde at ${ngItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting molde'
+      throw error
+    }
+    const programItem = await Program.findOne(
+      {
+        molde: _id
+      },
+      {
+        machine: 0,
+        molde: 0,
+        model: 0,
+        time: 0,
+        cycles: 0,
+        capacity: 0,
+        user: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    )
+    if (programItem) {
+      const error = new Error(`There is a program with this molde`)
+      error.code = 401
+      error.name = 'deleting molde'
+      throw error
+    }
+    const shotItem = await Shot.findOne(
+      {
+        molde: _id
+      },
+      {
+        molde: 0,
+        shift: 0,
+        comments: 0,
+        active: 0,
+        end: 0,
+        shiftEnd: 0,
+        quantity: 0,
+        user: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    )
+    if (shotItem) {
+      const error = new Error(
+        `There is a shot with this molde at ${shotItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting molde'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Molde.findByIdAndDelete(_id).select({
+      machine: 0,
+      molde: 0,
+      model: 0,
+      time: 0,
+      cycles: 0,
+      capacity: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting molde'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteModel: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting model'
+      throw error
+    }
+    const productionItem = await Production.findOne(
+      {
+        model: _id
+      },
+      {
+        dates: 0,
+        shift: 0,
+        real: 0,
+        ng: 0,
+        ok: 0,
+        plan: 0,
+        prod: 0,
+        cycles: 0,
+        ptime: 0,
+        wtime: 0,
+        dtime: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0,
+        oee: 0,
+        report: 0,
+        molde: 0,
+        model: 0,
+        program: 0
+      }
+    )
+    if (productionItem) {
+      const error = new Error(
+        `There is a report with this model at ${productionItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting model'
+      throw error
+    }
+    const ngItem = await Ng.findOne(
+      {
+        molde: _id
+      },
+      {
+        dates: 0,
+        shift: 0,
+        report: 0,
+        defect: 0,
+        model: 0,
+        molde: 0,
+        pieces: 0
+      }
+    )
+    if (ngItem) {
+      const error = new Error(
+        `There is a defect report with this model at ${ngItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting model'
+      throw error
+    }
+    const programItem = await Program.findOne(
+      {
+        model: _id
+      },
+      {
+        machine: 0,
+        molde: 0,
+        model: 0,
+        time: 0,
+        cycles: 0,
+        capacity: 0,
+        user: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    )
+    if (programItem) {
+      const error = new Error(`There is a program with this model`)
+      error.code = 401
+      error.name = 'deleting model'
+      throw error
+    }
+
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found or not valid')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Model.findByIdAndDelete(_id).select({
+      machine: 0,
+      molde: 0,
+      model: 0,
+      time: 0,
+      cycles: 0,
+      capacity: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting model'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteMachine: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting machine'
+      throw error
+    }
+    const reportItem = await Report.findOne(
+      {
+        machine: _id
+      },
+      {
+        dates: 0,
+        machine: 0,
+        shift: 0,
+        real: 0,
+        ng: 0,
+        ok: 0,
+        plan: 0,
+        tprod: 0,
+        cycles: 0,
+        ptime: 0,
+        wtime: 0,
+        dtime: 0,
+        avail: 0,
+        perf: 0,
+        qual: 0,
+        oee: 0,
+        purge: 0,
+        comments: 0,
+        team: 0,
+        oper: 0,
+        insp: 0,
+        user: 0,
+        progrs: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    )
+    if (reportItem) {
+      const error = new Error(
+        `There is a report with this machine at ${reportItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting machine'
+      throw error
+    }
+    const programItem = await Program.findOne(
+      {
+        machine: _id
+      },
+      {
+        machine: 0,
+        molde: 0,
+        model: 0,
+        time: 0,
+        cycles: 0,
+        capacity: 0,
+        user: 0,
+        createdAt: 0,
+        updatedAt: 0
+      }
+    )
+    if (programItem) {
+      const error = new Error(`There is a program with this machine`)
+      error.code = 401
+      error.name = 'deleting machine'
+      throw error
+    }
+
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found or not valid')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Machine.findByIdAndDelete(_id).select({
+      machine: 0,
+      molde: 0,
+      model: 0,
+      time: 0,
+      cycles: 0,
+      capacity: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting machine'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteShot: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting shot'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found or not valid')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Shot.findByIdAndDelete(_id).select({
+      molde: 0,
+      date: 0,
+      shift: 0,
+      comments: 0,
+      active: 0,
+      end: 0,
+      shiftEnd: 0,
+      quantity: 0,
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting shot'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteReport: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid deleting')
+      error.code = 401
+      error.name = 'deleting report'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found or not valid')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Report.findByIdAndDelete(_id).select({
+      dates: 0,
+      machine: 0,
+      shift: 0,
+      real: 0,
+      ng: 0,
+      ok: 0,
+      plan: 0,
+      tprod: 0,
+      cycles: 0,
+      ptime: 0,
+      wtime: 0,
+      dtime: 0,
+      avail: 0,
+      perf: 0,
+      qual: 0,
+      oee: 0,
+      purge: 0,
+      comments: 0,
+      team: 0,
+      oper: 0,
+      insp: 0,
+      user: 0,
+      progrs: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting shot'
+      error.code = 401
+      throw error
+    }
+
+    await Production.deleteMany({ report: item._id })
+    await Resine.deleteMany({ report: item._id })
+    await Downtime.deleteMany({ report: item._id })
+    await Ng.deleteMany({ report: item._id })
+
+    return { _id: item._id }
   }
 }
 

@@ -401,6 +401,10 @@ module.exports = buildSchema(`
         items: [Report!]
     }
 
+    type Deleted{
+        _id: String
+    }
+
     type RootMutation {
         newMolde(input: NewMolde): Molde!
         newMachine(input: NewMachine): Machine!
@@ -427,6 +431,18 @@ module.exports = buildSchema(`
         updateReport(_id: ID, input: UpdateReport): Report!
 
         finishShot(_id: ID, input: FinishShot): Shot!
+
+        deleteMaterial(_id: ID, user: ID): Deleted
+        deleteIssue(_id: ID, user: ID): Deleted
+        deleteDefect(_id: ID, user: ID): Deleted
+        deleteProfile(_id: ID, user: ID): Deleted
+        deleteUser(_id: ID, user: ID): Deleted
+        deleteProgram(_id: ID, user: ID): Deleted
+        deleteMolde(_id: ID, user: ID): Deleted
+        deleteModel(_id: ID, user: ID): Deleted
+        deleteMachine(_id: ID, user: ID): Deleted
+        deleteShot(_id: ID, user: ID): Deleted
+        deleteReport(_id: ID, user: ID): Deleted
     }
 
     input NewMolde {
