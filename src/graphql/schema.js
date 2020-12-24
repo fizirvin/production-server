@@ -618,6 +618,7 @@ module.exports = buildSchema(`
     input UpdateUser {
         level: String
         active: Boolean
+        password: String
     }
 
     input NewReport {
