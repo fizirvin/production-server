@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-
+import validator from 'validator'
 import { rows } from '../constants/rows'
 import zoneDate from '../functions/zoneDate'
 import fullDate from '../functions/fullDate'
@@ -921,6 +921,7 @@ const graphqlResolver = {
 
     const items = array.map((item) => {
       const { createdAt, updatedAt, user } = item._doc
+
       const object = {
         ...item._doc,
         createdAt: fullDate(createdAt),
@@ -1433,10 +1434,27 @@ const graphqlResolver = {
     }
   },
   newUser: async function ({ input }) {
+    if (validator.isEmpty(input.password)) {
+      const error = new Error('Invalid input.')
+      error.code = 422
+      throw error
+    }
+    if (!validator.isLength(input.password, { min: 5 })) {
+      const error = new Error('Password too short!')
+      error.code = 422
+      throw error
+    }
+    const existingName = await User.findOne({ name: input.name })
+    if (existingName) {
+      const error = new Error('name is already registered!')
+      error.code = 500
+      throw error
+    }
     const date = new Date()
     const newItem = new User({
       ...input,
       active: true,
+      password: await bcrypt.hash(input.password, 12),
       createdAt: zoneDate(date)
     })
     const item = await newItem.save()
@@ -2038,7 +2056,6 @@ const graphqlResolver = {
         shift: 0,
         dates: 0,
         program: 0,
-        prod: 0,
         avail: 0,
         perf: 0,
         qual: 0
@@ -2354,9 +2371,15 @@ const graphqlResolver = {
               )
             }
             if (filter === 'molde') {
+              if (row.key === 'purge') {
+                return []
+              }
               return filterMoldes(moldes, fields, response, row.key)
             }
             if (filter === 'model') {
+              if (row.key === 'purge') {
+                return []
+              }
               return filterModels(models, fields, response, row.key)
             }
           }
@@ -2474,12 +2497,52 @@ const graphqlResolver = {
             row.key === 'ok' ||
             row.key === 'plan' ||
             row.key === 'wtime' ||
-            row.key === 'oee' ||
             row.key === 'cycles'
           ) {
             return {
               row: row.row,
               data: [...data, total],
+              subData: subData,
+              second: []
+            }
+          }
+          if (row.key === 'oee') {
+            const wtime =
+              response.reduce((a, b) => {
+                return +(a + +b.wtime).toFixed(2)
+              }, 0) || 0
+            const dtime =
+              response.reduce((a, b) => {
+                return +(a + +b.dtime).toFixed(2)
+              }, 0) || 0
+            const real =
+              response.reduce((a, b) => {
+                return a + +b.real
+              }, 0) || 0
+            const ok =
+              response.reduce((a, b) => {
+                return +(a + +b.ok).toFixed(0)
+              }, 0) || 0
+            const prod =
+              response.reduce((a, b) => {
+                return +(a + +b.prod).toFixed(0)
+              }, 0) || 0
+            const time = wtime + dtime
+            const preperf = (real / prod) * 100
+            const perf = +preperf.toFixed(2) || 0
+            const preav = (wtime / time) * 100
+            const avail = +preav.toFixed(2) || 0
+            const preq = (ok / real) * 100
+            const qual = +preq.toFixed(2) || 0
+            const preoee = (avail * perf * qual) / 10000
+            const oee = +preoee.toFixed(2) || 0
+            const oeetotal = {
+              field: 'total',
+              value: oee
+            }
+            return {
+              row: row.row,
+              data: [...data, oeetotal],
               subData: subData,
               second: []
             }

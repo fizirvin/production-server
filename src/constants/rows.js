@@ -6,6 +6,6 @@ export const rows = [
   { row: 'Total Cycles (cycs)', key: 'cycles' },
   { row: 'Total Worktime (hrs)', key: 'wtime' },
   { row: 'Total Downtime (hrs)', key: 'dtime' },
-  { row: 'Total OEE (% average)', key: 'oee' },
+  { row: 'Total OEE (%)', key: 'oee' },
   { row: 'Total Purge (g)', key: 'purge' }
 ]
