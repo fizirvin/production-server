@@ -42,6 +42,20 @@ module.exports = buildSchema(`
         extractProductions: Extracted
         extractReports: Extracted
         updateReportsProd: Extracted
+
+        profilesLabels( team: String ): [ProfileLabelsQuery]
+    }
+
+    type ProfileLabelsQuery {
+        _id: ID!
+        number: String!
+        firstname: String!
+        lastname: String!
+        gender: String!
+        team: String!
+        position: String!
+        active: Boolean!
+        picture_URL: String
     }
 
     type AuthData {

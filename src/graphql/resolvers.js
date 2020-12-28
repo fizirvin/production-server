@@ -607,6 +607,11 @@ const graphqlResolver = {
     )
     return { token: token, userId: user._id, name: user.name }
   },
+  profilesLabels: async function ({ team }) {
+    return await Profile.find({ active: true, team }, null, {
+      sort: { team: -1, firstname: 1 }
+    })
+  },
   moldes: async function ({ page, add }) {
     if (!page) {
       page = 1
