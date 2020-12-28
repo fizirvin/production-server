@@ -66,5 +66,11 @@ export default function filterMoldes(moldes, fields, response, rowKey) {
 
     return { row: molde.number, data: [...sub, subtotal] }
   })
-  return data
+  const data2 = data.sort((x, y) => {
+    const valueA = y.data.find((d) => d.field === 'total').value
+    const valueB = x.data.find((d) => d.field === 'total').value
+    return valueA - valueB
+  })
+
+  return data2
 }

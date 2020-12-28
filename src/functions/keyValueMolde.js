@@ -5,7 +5,8 @@ export default function keyValueMolde(response, key, molde, min, max) {
     key === 'ok' ||
     key === 'plan' ||
     key === 'wtime' ||
-    key === 'dtime'
+    key === 'dtime' ||
+    key === 'cycles'
   ) {
     return (
       response

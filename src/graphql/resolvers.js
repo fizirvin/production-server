@@ -2019,10 +2019,14 @@ const graphqlResolver = {
     period = 'day',
     shifts = ['1', '2']
   }) {
+    if (today) {
+      today = today + 'T14:00:00.000+00:00'
+    }
     if (!today) {
       const day = new Date()
       today = stringDate(day) + 'T14:00:00.000+00:00'
     }
+
     if (shifts === '1') {
       shifts = ['1']
     }
@@ -2553,7 +2557,11 @@ const graphqlResolver = {
               row: row.row,
               data: [...data, total],
               subData: subData,
-              second: ngsSub
+              second: ngsSub.sort((x, y) => {
+                const valueA = y.data.find((d) => d.field === 'total').value
+                const valueB = x.data.find((d) => d.field === 'total').value
+                return valueA - valueB
+              })
             }
           }
           if (row.key === 'dtime') {
@@ -2561,7 +2569,11 @@ const graphqlResolver = {
               row: row.row,
               data: [...data, total],
               subData: subData,
-              second: downtimeSub
+              second: downtimeSub.sort((x, y) => {
+                const valueA = y.data.find((d) => d.field === 'total').value
+                const valueB = x.data.find((d) => d.field === 'total').value
+                return valueA - valueB
+              })
             }
           }
           if (row.key === 'purge') {
@@ -2569,7 +2581,11 @@ const graphqlResolver = {
               row: row.row,
               data: [...data, total],
               subData: subData,
-              second: resinesSub
+              second: resinesSub.sort((x, y) => {
+                const valueA = y.data.find((d) => d.field === 'total').value
+                const valueB = x.data.find((d) => d.field === 'total').value
+                return valueA - valueB
+              })
             }
           }
         })

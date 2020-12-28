@@ -64,5 +64,11 @@ export default function filterModels(models, fields, response, rowKey) {
     }
     return { row: model.name, data: [...sub, subtotal] }
   })
-  return data
+  const data2 = data.sort((x, y) => {
+    const valueA = y.data.find((d) => d.field === 'total').value
+    const valueB = x.data.find((d) => d.field === 'total').value
+    return valueA - valueB
+  })
+
+  return data2
 }
