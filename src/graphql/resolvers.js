@@ -800,7 +800,7 @@ const graphqlResolver = {
       .skip((page - 1) * perPage + add)
       .limit(perPage)
       .populate({ path: 'user', model: 'User' })
-      .sort({ name: 1 })
+      .sort({ code: 1 })
 
     const items = array.map((item) => {
       const { createdAt, updatedAt, user } = item._doc
@@ -831,7 +831,7 @@ const graphqlResolver = {
       .skip((page - 1) * perPage + add)
       .limit(perPage)
       .populate({ path: 'user', model: 'User' })
-      .sort({ name: 1 })
+      .sort({ code: 1 })
 
     const items = array.map((item) => {
       const { createdAt, updatedAt, user } = item._doc
