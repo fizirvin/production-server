@@ -19,6 +19,9 @@ module.exports = buildSchema(`
         profiles(page: Int, add: Int): ProfilesData!
         users(page: Int, add: Int): UsersData!
         reports(page: Int, add: Int): ReportsData!
+        locations(page: Int, add: Int): LocationsData!
+        spares(page: Int, add: Int): SparesData!
+        ingoings(page: Int, add: Int): IngoingsData!
         deleteReport: Hola
 
         cycles(shot: ID): [Cycles]
@@ -400,6 +403,59 @@ module.exports = buildSchema(`
         dates: Dates
     }
 
+    type Spare{
+        _id: ID
+        code: String
+        name: String
+        number: String
+        image: String
+        optimal: Int
+        stock: Int
+        price: Decimal
+        location: Location
+        user: String!
+        createdAt: Date!
+        updatedAt: Date
+    }
+
+    type SparesData{
+        total: Int
+        items: [Spare!]
+    }
+
+    type Location{
+        _id: ID
+        code: String
+        name: String
+        area: String
+        user: String!
+        createdAt: Date!
+        updatedAt: Date
+    }
+
+    type LocationsData{
+        total: Int
+        items: [Location!]
+    }
+
+    type Ingoing{
+        _id: ID
+        date: String
+        spare: Spare
+        quantity: Int
+        origin: String
+        provider: String
+        price: Decimal
+        user: String!
+        createdAt: Date!
+        updatedAt: Date
+    }
+
+    type IngoingsData{
+        total: Int
+        items: [Ingoing!]
+    }
+
     type Dates{
         y: String!
         m: String!
@@ -431,6 +487,9 @@ module.exports = buildSchema(`
         newProfile(input: NewProfile): Profile!
         newUser(input: NewUser): User!
         newReport(input: NewReport): Report!
+        newLocation(input: NewLocation): Location!
+        newSpare(input: NewSpare): Spare!
+        newIngoing(input: NewIngoing): Ingoing!
 
         updateMolde(_id: ID, input: UpdateMolde): Molde!
         updateMachine(_id: ID, input: UpdateMachine): Machine!
@@ -443,6 +502,9 @@ module.exports = buildSchema(`
         updateProfile(_id: ID, input: UpdateProfile): Profile!
         updateUser(_id: ID, input: UpdateUser): User!
         updateReport(_id: ID, input: UpdateReport): Report!
+        updateLocation(_id: ID, input: UpdateLocation): Location!
+        updateSpare(_id: ID, input: UpdateSpare): Spare!
+        updateIngoing(_id: ID, input: UpdateIngoing): Ingoing!
 
         finishShot(_id: ID, input: FinishShot): Shot!
 
@@ -457,6 +519,62 @@ module.exports = buildSchema(`
         deleteMachine(_id: ID, user: ID): Deleted
         deleteShot(_id: ID, user: ID): Deleted
         deleteReport(_id: ID, user: ID): Deleted
+        deleteLocation(_id: ID, user: ID): Deleted
+        deleteSpare(_id: ID, user: ID): Deleted
+        deleteIngoing(_id: ID, user: ID): Deleted
+
+        
+    }
+
+    input NewIngoing {
+        date: String
+        spare: ID
+        quantity: Int
+        origin: String
+        provider: String
+        price: Decimal
+        user: ID!
+    }
+
+    input UpdateIngoing {
+        date: String
+        spare: ID
+        quantity: Int
+        origin: String
+        provider: String
+        price: Decimal
+    }
+
+    input NewSpare {
+        code: String!
+        name: String!
+        number: String!
+        optimal: Int!
+        price: Decimal!
+        location: ID!
+        user: ID!
+    }
+
+    input UpdateSpare {
+        code: String
+        name: String
+        number: String
+        optimal: Int
+        price: Decimal
+        location: ID
+    }
+
+    input NewLocation {
+        code: String!
+        name: String!
+        area: String!
+        user: ID!
+    }
+
+    input UpdateLocation {
+        code: String
+        name: String
+        area: String
     }
 
     input NewMolde {

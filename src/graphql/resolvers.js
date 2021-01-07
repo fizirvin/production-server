@@ -37,6 +37,9 @@ import Defect from '../models/defect'
 import Shot from '../models/shot'
 import Profile from '../models/profile'
 import User from '../models/user'
+import Location from '../models/location'
+import Spare from '../models/location'
+import Ingoing from '../models/ingoing'
 
 import Old from '../models/old'
 import Report from '../models/report'
@@ -612,6 +615,125 @@ const graphqlResolver = {
       sort: { team: -1, firstname: 1 }
     })
   },
+  locations: async function ({ page, add }) {
+    if (!page) {
+      page = 1
+    }
+    if (!add) {
+      add = 0
+    }
+    const perPage = 100
+    const total = await Location.find().countDocuments()
+    if (total === 0) return { total: 0, items: [] }
+
+    const array = await Location.find()
+      .skip((page - 1) * perPage + add)
+      .limit(perPage)
+      .populate({ path: 'user', model: 'User' })
+      .sort({ _id: 1 })
+
+    const items = array.map((item) => {
+      const { createdAt, updatedAt, user } = item._doc
+      const object = {
+        ...item._doc,
+        createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
+        user: user.name
+      }
+
+      return object
+    })
+    return { total, items }
+  },
+  spares: async function ({ page, add }) {
+    if (!page) {
+      page = 1
+    }
+    if (!add) {
+      add = 0
+    }
+    const perPage = 100
+    const total = await Spare.find().countDocuments()
+    if (total === 0) return { total: 0, items: [] }
+
+    const array = await Spare.find()
+      .skip((page - 1) * perPage + add)
+      .limit(perPage)
+      .populate({ path: 'user', model: 'User' })
+      .sort({ _id: 1 })
+
+    const items = array.map(async (item) => {
+      const stockIn = await Ingoing.aggregate([
+        { $match: { spare: item._id } },
+        {
+          $group: {
+            _id: '$spare',
+            quantity: { $sum: '$quantity' }
+          }
+        }
+      ]).then((response) => {
+        return (response.length && response[0].quantity) || 0
+      })
+
+      const stockOut = await Ingoing.aggregate([
+        { $match: { spare: item._id } },
+        {
+          $group: {
+            _id: '$spare',
+            quantity: { $sum: '$quantity' }
+          }
+        }
+      ]).then((response) => {
+        return (response.length && response[0].quantity) || 0
+      })
+
+      const { createdAt, updatedAt, user } = item._doc
+      const stock = stockIn - stockOut
+
+      const object = {
+        ...item._doc,
+        createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
+        stock,
+        user: user.name
+      }
+
+      return object
+    })
+
+    return { total, items }
+  },
+  ingoings: async function ({ page, add }) {
+    if (!page) {
+      page = 1
+    }
+    if (!add) {
+      add = 0
+    }
+    const perPage = 100
+    const total = await Ingoing.find().countDocuments()
+    if (total === 0) return { total: 0, items: [] }
+
+    const array = await Ingoing.find()
+      .skip((page - 1) * perPage + add)
+      .limit(perPage)
+      .populate({ path: 'user', model: 'User' })
+      .sort({ _id: 1 })
+
+    const items = array.map((item) => {
+      const { createdAt, updatedAt, user, price } = item._doc
+      const object = {
+        ...item._doc,
+        price: +price,
+        createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
+        user: user.name
+      }
+
+      return object
+    })
+    return { total, items }
+  },
   moldes: async function ({ page, add }) {
     if (!page) {
       page = 1
@@ -1165,6 +1287,31 @@ const graphqlResolver = {
 
     return filterItems
   },
+  newLocation: async function ({ input }) {
+    const date = new Date()
+    const newItem = new Location({
+      ...input,
+      createdAt: zoneDate(date)
+    })
+    const item = await newItem.save()
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
+  },
   newMolde: async function ({ input }) {
     const newItem = new Molde({
       ...input,
@@ -1622,6 +1769,26 @@ const graphqlResolver = {
     }
 
     return object
+  },
+  updateLocation: async function ({ _id, input }) {
+    const item = await Location.findByIdAndUpdate(_id, input, { new: true })
+    const { createdAt, updatedAt, user } = item._doc
+
+    const existingUser = await User.findById(user, {
+      password: 0,
+      level: 0,
+      active: 0,
+      createdAt: 0,
+      user: 0,
+      _id: 0
+    })
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: existingUser.name
+    }
   },
   updateMolde: async function ({ _id, input }) {
     const item = await Molde.findByIdAndUpdate(_id, input, { new: true })
