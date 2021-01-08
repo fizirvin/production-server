@@ -38,8 +38,9 @@ import Shot from '../models/shot'
 import Profile from '../models/profile'
 import User from '../models/user'
 import Location from '../models/location'
-import Spare from '../models/location'
+import Spare from '../models/spare'
 import Ingoing from '../models/ingoing'
+import Outgoing from '../models/outgoing'
 
 import Old from '../models/old'
 import Report from '../models/report'
@@ -659,6 +660,7 @@ const graphqlResolver = {
     const array = await Spare.find()
       .skip((page - 1) * perPage + add)
       .limit(perPage)
+      .populate({ path: 'location', model: 'Location' })
       .populate({ path: 'user', model: 'User' })
       .sort({ _id: 1 })
 
@@ -675,7 +677,7 @@ const graphqlResolver = {
         return (response.length && response[0].quantity) || 0
       })
 
-      const stockOut = await Ingoing.aggregate([
+      const stockOut = await Outgoing.aggregate([
         { $match: { spare: item._id } },
         {
           $group: {
@@ -687,7 +689,13 @@ const graphqlResolver = {
         return (response.length && response[0].quantity) || 0
       })
 
-      const { createdAt, updatedAt, user } = item._doc
+      const lastPrice = await Ingoing.find({ origin: 'PO', spare: item._id })
+        .sort({ date: -1 })
+        .limit(1)
+
+      const price = lastPrice[0] ? lastPrice[0].price : 0
+
+      const { createdAt, updatedAt, user, location } = item._doc
       const stock = stockIn - stockOut
 
       const object = {
@@ -695,6 +703,8 @@ const graphqlResolver = {
         createdAt: fullDate(createdAt),
         updatedAt: fullDate(updatedAt),
         stock,
+        price: +price,
+        loCode: `${location.code} ${location.name}`,
         user: user.name
       }
 
@@ -718,13 +728,52 @@ const graphqlResolver = {
       .skip((page - 1) * perPage + add)
       .limit(perPage)
       .populate({ path: 'user', model: 'User' })
+      .populate({ path: 'spare', model: 'Spare' })
       .sort({ _id: 1 })
 
     const items = array.map((item) => {
-      const { createdAt, updatedAt, user, price } = item._doc
+      const { createdAt, updatedAt, user, spare, price } = item._doc
+
+      const setPrice = price ? +price : null
       const object = {
         ...item._doc,
-        price: +price,
+        price: setPrice,
+        spCode: `${spare.code} ${spare.name}`,
+        createdAt: fullDate(createdAt),
+        updatedAt: fullDate(updatedAt),
+        user: user.name
+      }
+
+      return object
+    })
+    return { total, items }
+  },
+  outgoings: async function ({ page, add }) {
+    if (!page) {
+      page = 1
+    }
+    if (!add) {
+      add = 0
+    }
+    const perPage = 100
+    const total = await Outgoing.find().countDocuments()
+    if (total === 0) return { total: 0, items: [] }
+
+    const array = await Outgoing.find()
+      .skip((page - 1) * perPage + add)
+      .limit(perPage)
+      .populate({ path: 'machine', model: 'Machine' })
+      .populate({ path: 'molde', model: 'Molde' })
+      .populate({ path: 'operator', model: 'Profile' })
+      .populate({ path: 'spare', model: 'Spare' })
+      .populate({ path: 'repairman', model: 'Profile' })
+      .populate({ path: 'user', model: 'User' })
+      .sort({ _id: 1 })
+
+    const items = array.map((item) => {
+      const { createdAt, updatedAt, user } = item._doc
+      const object = {
+        ...item._doc,
         createdAt: fullDate(createdAt),
         updatedAt: fullDate(updatedAt),
         user: user.name
@@ -1312,6 +1361,47 @@ const graphqlResolver = {
       user: existingUser.name
     }
   },
+  newSpare: async function ({ input }) {
+    const newItem = new Spare(input)
+    const item = await newItem.save()
+    const { _id } = item._doc
+
+    const newSpare = await Spare.findById(_id)
+      .populate({ path: 'location', model: 'Location' })
+      .populate({ path: 'user', model: 'User' })
+
+    const { createdAt, updatedAt, user, location } = newSpare._doc
+
+    return {
+      ...newSpare._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      price: 0,
+      stock: 0,
+      loCode: `${location.code} ${location.name}`,
+      user: user.name
+    }
+  },
+  newIngoing: async function ({ input }) {
+    const newItem = new Ingoing(input)
+    const item = await newItem.save()
+    const { _id } = item._doc
+
+    const newIngoing = await Ingoing.findById(_id)
+      .populate({ path: 'user', model: 'User' })
+      .populate({ path: 'spare', model: 'Spare' })
+
+    const { createdAt, updatedAt, user, spare, price } = newIngoing._doc
+    const setPrice = price ? +price : null
+    return {
+      ...newIngoing._doc,
+      price: setPrice,
+      spCode: `${spare.code} ${spare.name}`,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: user.name
+    }
+  },
   newMolde: async function ({ input }) {
     const newItem = new Molde({
       ...input,
@@ -1788,6 +1878,71 @@ const graphqlResolver = {
       createdAt: fullDate(createdAt),
       updatedAt: fullDate(updatedAt),
       user: existingUser.name
+    }
+  },
+  updateSpare: async function ({ _id, input }) {
+    const item = await Spare.findByIdAndUpdate(_id, input, { new: true })
+      .populate({ path: 'location', model: 'Location' })
+      .populate({ path: 'user', model: 'User' })
+    const { createdAt, updatedAt, user, location } = item._doc
+
+    const stockIn = await Ingoing.aggregate([
+      { $match: { spare: _id } },
+      {
+        $group: {
+          _id: '$spare',
+          quantity: { $sum: '$quantity' }
+        }
+      }
+    ]).then((response) => {
+      return (response.length && response[0].quantity) || 0
+    })
+
+    const stockOut = await Outgoing.aggregate([
+      { $match: { spare: _id } },
+      {
+        $group: {
+          _id: '$spare',
+          quantity: { $sum: '$quantity' }
+        }
+      }
+    ]).then((response) => {
+      return (response.length && response[0].quantity) || 0
+    })
+
+    const lastPrice = await Ingoing.find({ origin: 'PO', spare: item._id })
+      .sort({ date: -1 })
+      .limit(1)
+
+    const price = lastPrice[0] ? lastPrice[0].price : 0
+
+    const stock = stockIn - stockOut
+
+    return {
+      ...item._doc,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      stock,
+      price: +price,
+      loCode: `${location.code} ${location.name}`,
+      user: user.name
+    }
+  },
+  updateIngoing: async function ({ _id, input }) {
+    const item = await Ingoing.findByIdAndUpdate(_id, input, { new: true })
+      .populate({ path: 'user', model: 'User' })
+      .populate({ path: 'spare', model: 'Spare' })
+
+    const { createdAt, updatedAt, user, spare, price } = item._doc
+    const setPrice = price ? +price : null
+
+    return {
+      ...item._doc,
+      price: setPrice,
+      spCode: `${spare.code} ${spare.name}`,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: user.name
     }
   },
   updateMolde: async function ({ _id, input }) {
@@ -2906,6 +3061,140 @@ const graphqlResolver = {
     })
 
     return shots
+  },
+  deleteLocation: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid')
+      error.code = 401
+      error.name = 'deleting location'
+      throw error
+    }
+    const spareItem = await Spare.findOne({ location: _id })
+    if (spareItem) {
+      const error = new Error(`There is a spare with this location`)
+      error.code = 401
+      error.name = 'deleting location'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Location.findByIdAndDelete(_id).select({
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting location'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteSpare: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid')
+      error.code = 401
+      error.name = 'deleting spare'
+      throw error
+    }
+    const ingoingItem = await Ingoing.findOne({ spare: _id })
+    if (ingoingItem) {
+      const error = new Error(
+        `There is a Ingoing with this spare at ${spareItem.date}`
+      )
+      error.code = 401
+      error.name = 'deleting spare'
+      throw error
+    }
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Spare.findByIdAndDelete(_id).select({
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting spare'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteIngoing: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid')
+      error.code = 401
+      error.name = 'deleting ingoing'
+      throw error
+    }
+
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Ingoing.findByIdAndDelete(_id).select({
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting ingoing'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
   },
   deleteMaterial: async function ({ _id, user }) {
     if (!_id || !user) {

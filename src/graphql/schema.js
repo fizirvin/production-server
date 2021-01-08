@@ -22,6 +22,7 @@ module.exports = buildSchema(`
         locations(page: Int, add: Int): LocationsData!
         spares(page: Int, add: Int): SparesData!
         ingoings(page: Int, add: Int): IngoingsData!
+        outgoings(page: Int, add: Int): OutgoingsData!
         deleteReport: Hola
 
         cycles(shot: ID): [Cycles]
@@ -403,6 +404,21 @@ module.exports = buildSchema(`
         dates: Dates
     }
 
+    type Dates{
+        y: String!
+        m: String!
+        dm: String!
+        dw: String!
+        w: String!
+        dy: String!
+        q: String!
+    }
+
+    type ReportsData{
+        total: Int
+        items: [Report!]
+    }
+
     type Spare{
         _id: ID
         code: String
@@ -413,6 +429,7 @@ module.exports = buildSchema(`
         stock: Int
         price: Decimal
         location: Location
+        loCode: String
         user: String!
         createdAt: Date!
         updatedAt: Date
@@ -446,6 +463,7 @@ module.exports = buildSchema(`
         origin: String
         provider: String
         price: Decimal
+        spCode: String
         user: String!
         createdAt: Date!
         updatedAt: Date
@@ -456,20 +474,32 @@ module.exports = buildSchema(`
         items: [Ingoing!]
     }
 
-    type Dates{
-        y: String!
-        m: String!
-        dm: String!
-        dw: String!
-        w: String!
-        dy: String!
-        q: String!
+    type Outgoing{
+        _id: ID
+        date: String
+        shift: String
+        team: String
+        machine: Machine
+        molde: Molde
+        operator: Profile
+        spare: Spare
+        quantity: Int
+        origin: String
+        image: String
+        description: String
+        repairman: Profile
+        method: String
+        user: String!
+        createdAt: Date!
+        updatedAt: Date
     }
 
-    type ReportsData{
+    type OutgoingsData{
         total: Int
-        items: [Report!]
+        items: [Outgoing!]
     }
+
+    
 
     type Deleted{
         _id: String
@@ -490,6 +520,7 @@ module.exports = buildSchema(`
         newLocation(input: NewLocation): Location!
         newSpare(input: NewSpare): Spare!
         newIngoing(input: NewIngoing): Ingoing!
+        newOutgoing(input: NewOutgoing): Outgoing!
 
         updateMolde(_id: ID, input: UpdateMolde): Molde!
         updateMachine(_id: ID, input: UpdateMachine): Machine!
@@ -505,6 +536,8 @@ module.exports = buildSchema(`
         updateLocation(_id: ID, input: UpdateLocation): Location!
         updateSpare(_id: ID, input: UpdateSpare): Spare!
         updateIngoing(_id: ID, input: UpdateIngoing): Ingoing!
+        updateOutgoing(_id: ID, input: UpdateOutgoing): Outgoing!
+
 
         finishShot(_id: ID, input: FinishShot): Shot!
 
@@ -522,8 +555,40 @@ module.exports = buildSchema(`
         deleteLocation(_id: ID, user: ID): Deleted
         deleteSpare(_id: ID, user: ID): Deleted
         deleteIngoing(_id: ID, user: ID): Deleted
+        deleteOutgoing(_id: ID, user: ID): Deleted    
+    }
 
-        
+    input NewOutgoing {
+        date: String
+        shift: String
+        team: String
+        machine: ID
+        molde: ID
+        operator: ID
+        spare: ID
+        quantity: Int
+        origin: String
+        image: String
+        description: String
+        repairman: ID
+        method: String
+        user: ID!
+    }
+
+    input UpdateOutgoing {
+        date: String
+        shift: String
+        team: String
+        machine: ID
+        molde: ID
+        operator: ID
+        spare: ID
+        quantity: Int
+        origin: String
+        image: String
+        description: String
+        repairman: ID
+        method: String
     }
 
     input NewIngoing {
@@ -550,7 +615,6 @@ module.exports = buildSchema(`
         name: String!
         number: String!
         optimal: Int!
-        price: Decimal!
         location: ID!
         user: ID!
     }
@@ -560,7 +624,6 @@ module.exports = buildSchema(`
         name: String
         number: String
         optimal: Int
-        price: Decimal
         location: ID
     }
 

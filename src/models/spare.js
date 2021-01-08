@@ -16,14 +16,10 @@ const spareSchema = new Schema(
     },
     image: {
       type: String,
-      required: true
+      required: false
     },
     optimal: {
       type: Number,
-      required: true
-    },
-    price: {
-      type: Schema.Types.Decimal128,
       required: true
     },
     location: {
