@@ -3118,7 +3118,7 @@ const graphqlResolver = {
     const ingoingItem = await Ingoing.findOne({ spare: _id })
     if (ingoingItem) {
       const error = new Error(
-        `There is a Ingoing with this spare at ${spareItem.date}`
+        `There is a Ingoing with this spare at ${ingoingItem.date}`
       )
       error.code = 401
       error.name = 'deleting spare'
