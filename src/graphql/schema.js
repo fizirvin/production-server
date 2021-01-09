@@ -482,12 +482,14 @@ module.exports = buildSchema(`
         machine: Machine
         molde: Molde
         operator: Profile
+        op: String
         spare: Spare
+        spCode: String
         quantity: Int
-        origin: String
         image: String
         description: String
         repairman: Profile
+        rep: String
         method: String
         user: String!
         createdAt: Date!
@@ -567,7 +569,7 @@ module.exports = buildSchema(`
         operator: ID
         spare: ID
         quantity: Int
-        origin: String
+        
         image: String
         description: String
         repairman: ID
@@ -584,7 +586,7 @@ module.exports = buildSchema(`
         operator: ID
         spare: ID
         quantity: Int
-        origin: String
+        
         image: String
         description: String
         repairman: ID

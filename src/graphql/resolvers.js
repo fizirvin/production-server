@@ -771,9 +771,19 @@ const graphqlResolver = {
       .sort({ _id: 1 })
 
     const items = array.map((item) => {
-      const { createdAt, updatedAt, user } = item._doc
+      const {
+        createdAt,
+        updatedAt,
+        user,
+        spare,
+        operator,
+        repairman
+      } = item._doc
       const object = {
         ...item._doc,
+        spCode: `${spare.code} ${spare.name}`,
+        op: `${operator.firstname} ${operator.lastname}`,
+        rep: `${repairman.firstname} ${repairman.lastname}`,
         createdAt: fullDate(createdAt),
         updatedAt: fullDate(updatedAt),
         user: user.name
