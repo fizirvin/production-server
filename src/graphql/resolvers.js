@@ -1412,6 +1412,38 @@ const graphqlResolver = {
       user: user.name
     }
   },
+  newOutgoing: async function ({ input }) {
+    const newItem = new Outgoing(input)
+    const item = await newItem.save()
+    const { _id } = item._doc
+
+    const newOutgoing = await Outgoing.findById(_id)
+      .populate({ path: 'machine', model: 'Machine' })
+      .populate({ path: 'molde', model: 'Molde' })
+      .populate({ path: 'operator', model: 'Profile' })
+      .populate({ path: 'spare', model: 'Spare' })
+      .populate({ path: 'repairman', model: 'Profile' })
+      .populate({ path: 'user', model: 'User' })
+
+    const {
+      createdAt,
+      updatedAt,
+      user,
+      spare,
+      operator,
+      repairman
+    } = newOutgoing._doc
+
+    return {
+      ...newOutgoing._doc,
+      spCode: `${spare.code} ${spare.name}`,
+      op: `${operator.firstname} ${operator.lastname}`,
+      rep: `${repairman.firstname} ${repairman.lastname}`,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: user.name
+    }
+  },
   newMolde: async function ({ input }) {
     const newItem = new Molde({
       ...input,
@@ -1950,6 +1982,27 @@ const graphqlResolver = {
       ...item._doc,
       price: setPrice,
       spCode: `${spare.code} ${spare.name}`,
+      createdAt: fullDate(createdAt),
+      updatedAt: fullDate(updatedAt),
+      user: user.name
+    }
+  },
+  updateOutgoing: async function ({ _id, input }) {
+    const item = await Outgoing.findByIdAndUpdate(_id, input, { new: true })
+      .populate({ path: 'machine', model: 'Machine' })
+      .populate({ path: 'molde', model: 'Molde' })
+      .populate({ path: 'operator', model: 'Profile' })
+      .populate({ path: 'spare', model: 'Spare' })
+      .populate({ path: 'repairman', model: 'Profile' })
+      .populate({ path: 'user', model: 'User' })
+
+    const { createdAt, updatedAt, user, spare, operator, repairman } = item._doc
+
+    return {
+      ...item._doc,
+      spCode: `${spare.code} ${spare.name}`,
+      op: `${operator.firstname} ${operator.lastname}`,
+      rep: `${repairman.firstname} ${repairman.lastname}`,
       createdAt: fullDate(createdAt),
       updatedAt: fullDate(updatedAt),
       user: user.name
@@ -3200,6 +3253,46 @@ const graphqlResolver = {
     if (!item) {
       const error = new Error('No item found')
       error.name = 'deleting ingoing'
+      error.code = 401
+      throw error
+    }
+
+    return { _id: item._id }
+  },
+  deleteOutgoing: async function ({ _id, user }) {
+    if (!_id || !user) {
+      const error = new Error('invalid')
+      error.code = 401
+      error.name = 'deleting outgoing'
+      throw error
+    }
+
+    const userId = await User.findOne(
+      { _id: user, active: true, level: '1' },
+      {
+        password: 0,
+        level: 0,
+        active: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        user: 0,
+        _id: 0
+      }
+    )
+    if (!userId) {
+      const error = new Error('No user found')
+      error.code = '401'
+      throw error
+    }
+
+    const item = await Outgoing.findByIdAndDelete(_id).select({
+      user: 0,
+      createdAt: 0,
+      updatedAt: 0
+    })
+    if (!item) {
+      const error = new Error('No item found')
+      error.name = 'deleting outgoing'
       error.code = 401
       throw error
     }

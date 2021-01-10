@@ -38,10 +38,6 @@ const outgoingSchema = new Schema(
       type: Number,
       required: true
     },
-    origin: {
-      type: String,
-      required: true
-    },
     image: {
       type: String,
       required: false

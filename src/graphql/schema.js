@@ -569,7 +569,6 @@ module.exports = buildSchema(`
         operator: ID
         spare: ID
         quantity: Int
-        
         image: String
         description: String
         repairman: ID
@@ -586,7 +585,6 @@ module.exports = buildSchema(`
         operator: ID
         spare: ID
         quantity: Int
-        
         image: String
         description: String
         repairman: ID
@@ -625,6 +623,7 @@ module.exports = buildSchema(`
         code: String
         name: String
         number: String
+        image: String
         optimal: Int
         location: ID
     }
