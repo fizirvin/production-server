@@ -50,19 +50,11 @@ const profileSchema = new Schema(
     picture_URL: {
       type: String,
       required: false
-    },
-    createdAt: {
-      type: Date,
-      required: false
-    },
-    updatedAt: {
-      type: Date,
-      required: false
     }
   },
   {
-    versionKey: false
-    // timestamps: true
+    versionKey: false,
+    timestamps: true
   }
 )
 
