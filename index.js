@@ -5,11 +5,12 @@ import graphqlResolver from './src/graphql/resolvers'
 import graphqlSchema from './src/graphql/schema'
 import { api } from './config.js'
 import connect from './src/database'
+import compression from 'compression'
 
 const PORT = api.port
 const app = express()
 app.use(cors())
-
+app.use(compression())
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader(
