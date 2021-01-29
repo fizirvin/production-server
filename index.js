@@ -1,10 +1,10 @@
 import express from 'express'
 import { graphqlHTTP } from 'express-graphql'
 import cors from 'cors'
-import graphqlResolver from './graphql/resolvers'
-import graphqlSchema from './graphql/schema'
-import { api } from '../config.js'
-import connect from './database'
+import graphqlResolver from './src/graphql/resolvers'
+import graphqlSchema from './src/graphql/schema'
+import { api } from './config.js'
+import connect from './src/database'
 
 const PORT = api.port
 const app = express()
